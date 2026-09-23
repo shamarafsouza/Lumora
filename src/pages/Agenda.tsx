@@ -1,200 +1,192 @@
 import { useMemo, useState } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { agendamentos, clientes, servicos } from "../data";
+type DiaSemana = {
+  data: Date;
+  nome: string;
+};
+
+function formatarData(data: Date) {
+  return data.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+  });
+}
+
+function formatarDiaCompleto(data: Date) {
+  return data.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  });
+}
+
+function inicioDaSemana(data: Date) {
+  const resultado = new Date(data);
+  const dia = resultado.getDay();
+
+  // Segunda-feira = 0
+  const diferenca = dia === 0 ? -6 : 1 - dia;
+
+  resultado.setDate(resultado.getDate() + diferenca);
+  resultado.setHours(0, 0, 0, 0);
+
+  return resultado;
+}
+
+function mesmaData(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
 
 export function Agenda() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const hoje = useMemo(() => {
+    const data = new Date();
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }, []);
 
-  const rows = useMemo(
-    () =>
-      agendamentos.map((a) => ({
-        ...a,
-        cliente: clientes.find((c) => c.id === a.clienteId)!,
-        servico: servicos.find((s) => s.id === a.servicoId)!,
-      })),
-    []
+  const [dataSelecionada, setDataSelecionada] = useState(hoje);
+
+  const [semanaAtual, setSemanaAtual] = useState(
+    inicioDaSemana(hoje)
   );
 
-  const current = rows.find((r) => r.id === selected);
+  const dias = useMemo<DiaSemana[]>(() => {
+    return Array.from({ length: 7 }, (_, index) => {
+      const data = new Date(semanaAtual);
+
+      data.setDate(semanaAtual.getDate() + index);
+
+      return {
+        data,
+        nome: data
+          .toLocaleDateString("pt-BR", {
+            weekday: "short",
+          })
+          .replace(".", "")
+          .slice(0, 3),
+      };
+    });
+  }, [semanaAtual]);
+
+  function selecionarDia(data: Date) {
+    setDataSelecionada(data);
+  }
+
+  function semanaAnterior() {
+    setSemanaAtual((atual) => {
+      const nova = new Date(atual);
+      nova.setDate(nova.getDate() - 7);
+      return nova;
+    });
+  }
+
+  function proximaSemana() {
+    setSemanaAtual((atual) => {
+      const nova = new Date(atual);
+      nova.setDate(nova.getDate() + 7);
+      return nova;
+    });
+  }
+
+  function voltarParaHoje() {
+    setDataSelecionada(hoje);
+    setSemanaAtual(inicioDaSemana(hoje));
+  }
+
+  const horarios = [
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
+  ];
 
   return (
     <main className="page agenda-page">
       <header className="top">
         <div>
           <h1>Lumora</h1>
-          <p>Quinta, 24 de Outubro</p>
+
+          <p>
+            {formatarDiaCompleto(dataSelecionada)}
+          </p>
         </div>
 
         <div className="avatar">LU</div>
       </header>
 
+      <div className="calendar-navigation">
+        <button
+          type="button"
+          onClick={semanaAnterior}
+          aria-label="Semana anterior"
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        <button
+          type="button"
+          className="today-button"
+          onClick={voltarParaHoje}
+        >
+          Hoje
+        </button>
+
+        <button
+          type="button"
+          onClick={proximaSemana}
+          aria-label="Próxima semana"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
       <div className="week">
-        <span>
-          Ter
-          <br />
-          <b>22</b>
-        </span>
+        {dias.map((dia) => {
+          const selecionado = mesmaData(
+            dia.data,
+            dataSelecionada
+          );
 
-        <span>
-          Qua
-          <br />
-          <b>23</b>
-        </span>
-
-        <span className="selected-day">
-          Qui
-          <br />
-          <b>24</b>
-        </span>
-
-        <span>
-          Sex
-          <br />
-          <b>25</b>
-        </span>
-
-        <span>
-          Sáb
-          <br />
-          <b>26</b>
-        </span>
-
-        <span>
-          Dom
-          <br />
-          <b>27</b>
-        </span>
+          return (
+            <button
+              key={dia.data.toISOString()}
+              type="button"
+              className={
+                selecionado ? "selected-day" : ""
+              }
+              onClick={() => selecionarDia(dia.data)}
+            >
+              {dia.nome}
+              <br />
+              <b>{dia.data.getDate()}</b>
+            </button>
+          );
+        })}
       </div>
 
       <section className="timeline">
-        <Slot
-          time="08:00"
-          item={rows[0]}
-          onClick={() => setSelected(rows[0].id)}
-        />
-
-        <Slot
-          time="10:00"
-          item={rows[1]}
-          onClick={() => setSelected(rows[1].id)}
-        />
-
-        <div className="available">
-          <span>11:30</span>
-          <b>Disponível</b>
-        </div>
-
-        <Slot
-          time="14:00"
-          item={rows[2]}
-          onClick={() => setSelected(rows[2].id)}
-        />
-      </section>
-
-      {current && (
-        <div
-          className="sheet-backdrop"
-          onClick={() => setSelected(null)}
-        >
-          <section
-            className="sheet"
-            onClick={(e) => e.stopPropagation()}
+        {horarios.map((horario) => (
+          <div
+            className="available"
+            key={horario}
           >
-            <button
-              className="close"
-              onClick={() => setSelected(null)}
-            >
-              <X />
-            </button>
-
-            <div className="handle" />
-
-            <h2>{current.cliente.nome}</h2>
-
-            <p className="muted">
-              Hoje às {current.horario} •{" "}
-              {current.status === "pendente"
-                ? "Pendente"
-                : "Confirmado"}
-            </p>
-
-            <div className="detail">
-              <span>Procedimento:</span>
-              <b>{current.servico.nome}</b>
-
-              <span>Duração:</span>
-              <b>{current.servico.duracao} minutos</b>
-            </div>
-
-            <div className="money">
-              <div>
-                <span>Valor cobrado</span>
-                <b>
-                  R${" "}
-                  {current.servico.preco
-                    .toFixed(2)
-                    .replace(".", ",")}
-                </b>
-              </div>
-
-              <div>
-                <span>Gasto de Material</span>
-                <b className="gold">R$ 22,00</b>
-              </div>
-            </div>
-
-            <a
-              className="whatsapp"
-              href={`https://wa.me/${
-                current.cliente.telefone
-              }?text=${encodeURIComponent(
-                `Olá, ${current.cliente.nome}! 💅 Passando para confirmar seu horário hoje às ${current.horario}.`
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <MessageCircle />
-              Enviar lembrete no WhatsApp
-            </a>
-
-            <div className="sheet-actions">
-              <button>Concluir Atendimento</button>
-              <button>Editar</button>
-            </div>
-          </section>
-        </div>
-      )}
+            <span>{horario}</span>
+            <b>Disponível</b>
+          </div>
+        ))}
+      </section>
     </main>
-  );
-}
-
-function Slot({
-  time,
-  item,
-  onClick,
-}: {
-  time: string;
-  item: any;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`appointment ${item.status}`}
-      onClick={onClick}
-    >
-      <span className="slot-time">{time}</span>
-
-      <div>
-        <strong>{item.cliente.nome}</strong>
-        <small>{item.servico.nome}</small>
-      </div>
-
-      <em>
-        {item.status === "confirmado"
-          ? "Confirmado"
-          : "Pendente"}
-      </em>
-    </button>
   );
 }
