@@ -146,12 +146,13 @@ export function Login({
         Voltar
       </button>
 
+      <div className="auth-card">
         <div className="auth-brand">
-        <img
+          <img
             src="/lumora.png"
             alt="Lumora"
             className="auth-logo"
-        />
+          />
         </div>
 
         <div className="auth-heading">
@@ -253,7 +254,11 @@ export function Login({
             <button
               type="button"
               className="forgot-password"
-              onClick={() => setSucesso("A recuperação de senha será adicionada na próxima etapa.")}
+              onClick={() =>
+                setSucesso(
+                  "A recuperação de senha será adicionada na próxima etapa."
+                )
+              }
             >
               Esqueci minha senha
             </button>
