@@ -1,11 +1,20 @@
 import { Clock3 } from "lucide-react";
 
 import { servicos } from "../data";
+import type { Servico } from "../types";
 
 export function Servicos() {
-  const groups = Object.groupBy(
-    servicos,
-    (s) => s.categoria
+  const groups = servicos.reduce<Record<string, Servico[]>>(
+    (acc, servico) => {
+      if (!acc[servico.categoria]) {
+        acc[servico.categoria] = [];
+      }
+
+      acc[servico.categoria].push(servico);
+
+      return acc;
+    },
+    {}
   );
 
   return (
@@ -19,23 +28,23 @@ export function Servicos() {
         <div className="avatar">LU</div>
       </header>
 
-      {Object.entries(groups).map(([cat, list]) => (
-        <section className="service-group" key={cat}>
-          <h2>{cat}</h2>
+      {Object.entries(groups).map(([categoria, lista]) => (
+        <section className="service-group" key={categoria}>
+          <h2>{categoria}</h2>
 
-          {list?.map((s) => (
-            <article className="service-card" key={s.id}>
+          {lista.map((servico) => (
+            <article className="service-card" key={servico.id}>
               <div>
-                <strong>{s.nome}</strong>
+                <strong>{servico.nome}</strong>
 
                 <span>
                   <Clock3 />
-                  {s.duracao}m
+                  {servico.duracao}m
                 </span>
               </div>
 
               <b>
-                R$ {s.preco.toFixed(2).replace(".", ",")}
+                R$ {servico.preco.toFixed(2).replace(".", ",")}
               </b>
             </article>
           ))}
