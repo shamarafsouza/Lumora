@@ -1,91 +1,285 @@
-export function Financeiro() {
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Plus, Wallet } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import "./Financeiro.css";
+
+type LancamentoFinanceiro = {
+  id: string;
+  agendamento_id: string | null;
+  valor_recebido: number;
+  forma_pagamento: string;
+  custo_material: number;
+  observacoes: string | null;
+  created_at: string;
+};
+
+type Despesa = {
+  id: string;
+  descricao: string;
+  categoria: string;
+  tipo: string;
+  valor: number;
+  data: string;
+  observacoes: string | null;
+};
+
+const formatarMoeda = (valor: number) =>
+  valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+
+const Financeiro = () => {
+  const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
+  const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const carregarFinanceiro = async () => {
+    setCarregando(true);
+
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) {
+      setCarregando(false);
+      return;
+    }
+
+    const [financeiroResponse, despesasResponse] = await Promise.all([
+      supabase
+        .from("financeiro_atendimentos")
+        .select(
+          "id, agendamento_id, valor_recebido, forma_pagamento, custo_material, observacoes, created_at"
+        )
+        .eq("profissional_id", userData.user.id)
+        .order("created_at", { ascending: false }),
+
+      supabase
+        .from("despesas")
+        .select(
+          "id, descricao, categoria, tipo, valor, data, observacoes"
+        )
+        .eq("profissional_id", userData.user.id)
+        .order("data", { ascending: false }),
+    ]);
+
+    if (financeiroResponse.error) {
+      console.error(
+        "Erro ao carregar financeiro:",
+        financeiroResponse.error
+      );
+    }
+
+    if (despesasResponse.error) {
+      console.error(
+        "Erro ao carregar despesas:",
+        despesasResponse.error
+      );
+    }
+
+    setLancamentos(
+      (financeiroResponse.data || []).map((item) => ({
+        ...item,
+        valor_recebido: Number(item.valor_recebido),
+        custo_material: Number(item.custo_material),
+      }))
+    );
+
+    setDespesas(
+      (despesasResponse.data || []).map((item) => ({
+        ...item,
+        valor: Number(item.valor),
+      }))
+    );
+
+    setCarregando(false);
+  };
+
+  useEffect(() => {
+    carregarFinanceiro();
+  }, []);
+
+  const totais = useMemo(() => {
+    const receitas = lancamentos.reduce(
+      (total, item) => total + item.valor_recebido,
+      0
+    );
+
+    const materiais = lancamentos.reduce(
+      (total, item) => total + item.custo_material,
+      0
+    );
+
+    const despesasAvulsas = despesas.reduce(
+      (total, item) => total + item.valor,
+      0
+    );
+
+    const custos = materiais + despesasAvulsas;
+
+    return {
+      receitas,
+      materiais,
+      despesasAvulsas,
+      custos,
+      resultado: receitas - custos,
+    };
+  }, [lancamentos, despesas]);
+
   return (
-    <main className="page">
-      <header className="top">
+    <main className="financeiro-page">
+      <header className="financeiro-header">
         <div>
-          <h1>Lumora</h1>
-          <p>Fluxo de Caixa Mensal</p>
+          <span className="financeiro-eyebrow">LUMORA</span>
+          <h1>Financeiro</h1>
+          <p>Acompanhe as entradas e saídas do seu negócio.</p>
         </div>
 
-        <div className="avatar">LU</div>
+        <button
+          className="financeiro-add"
+          type="button"
+          title="Adicionar despesa"
+        >
+          <Plus size={20} />
+        </button>
       </header>
 
-      <div className="metrics">
-        <div>
-          <span>Faturamento</span>
-          <b>R$ 2.450</b>
+      <section className="financeiro-resumo">
+        <div className="financeiro-card receita">
+          <div className="financeiro-card-icon">
+            <ArrowUp size={18} />
+          </div>
+
+          <span>Receitas</span>
+          <strong>{formatarMoeda(totais.receitas)}</strong>
         </div>
 
-        <div>
-          <span>Gastos</span>
-          <b>R$ 820</b>
+        <div className="financeiro-card custo">
+          <div className="financeiro-card-icon">
+            <ArrowDown size={18} />
+          </div>
+
+          <span>Custos e despesas</span>
+          <strong>{formatarMoeda(totais.custos)}</strong>
         </div>
 
-        <div>
-          <span>Lucro Líquido</span>
-          <b>R$ 1.630</b>
+        <div className="financeiro-card resultado">
+          <div className="financeiro-card-icon">
+            <Wallet size={18} />
+          </div>
+
+          <span>Resultado</span>
+          <strong>{formatarMoeda(totais.resultado)}</strong>
         </div>
-      </div>
+      </section>
 
-      <h2>Histórico Recente</h2>
+      <section className="financeiro-detalhes">
+        <div className="financeiro-section-header">
+          <div>
+            <h2>Atendimentos</h2>
+            <p>Valores recebidos pelos serviços realizados.</p>
+          </div>
+        </div>
 
-      <div className="history">
-        {[
-          [
-            "Mariana Silva",
-            "Manutenção de Gel + Nail Art",
-            "R$ 110,00",
-            "R$ 15,00",
-          ],
-          [
-            "Beatriz Costa",
-            "Pé e Mão Simples",
-            "R$ 65,00",
-            "R$ 8,00",
-          ],
-          [
-            "Gasto de Material Geral",
-            "Compra de Brocas e Lixas",
-            "- R$ 120,00",
-            "",
-          ],
-          [
-            "Carla Rezende",
-            "Alongamento Fibra",
-            "R$ 180,00",
-            "R$ 22,00",
-          ],
-          [
-            "Aluguel da Sala",
-            "Custo Fixo",
-            "- R$ 450,00",
-            "",
-          ],
-          [
-            "Fernanda Lima",
-            "Blindagem de Unhas",
-            "R$ 90,00",
-            "R$ 12,00",
-          ],
-        ].map((x, i) => (
-          <article className="history-card" key={i}>
-            <div>
-              <strong>{x[0]}</strong>
-              <span>{x[1]}</span>
+        {carregando ? (
+          <div className="financeiro-vazio">
+            Carregando financeiro...
+          </div>
+        ) : lancamentos.length === 0 ? (
+          <div className="financeiro-vazio">
+            <Wallet size={32} />
+            <strong>Nenhum atendimento financeiro</strong>
+            <span>
+              Quando você registrar valores recebidos, eles aparecerão aqui.
+            </span>
+          </div>
+        ) : (
+          <div className="financeiro-lista">
+            {lancamentos.map((item) => (
+              <article
+                className="financeiro-lancamento"
+                key={item.id}
+              >
+                <div>
+                  <strong>Atendimento</strong>
 
-              {x[3] && (
-                <small>
-                  Custo de material: {x[3]}
-                </small>
-              )}
-            </div>
+                  <span>
+                    {new Date(item.created_at).toLocaleDateString(
+                      "pt-BR"
+                    )}
+                  </span>
 
-            <b className={x[2].startsWith("-") ? "expense" : ""}>
-              {x[2]}
-            </b>
-          </article>
-        ))}
-      </div>
+                  <small>
+                    Pagamento: {item.forma_pagamento}
+                  </small>
+                </div>
+
+                <div className="financeiro-valores">
+                  <strong>
+                    {formatarMoeda(item.valor_recebido)}
+                  </strong>
+
+                  {item.custo_material > 0 && (
+                    <small>
+                      Material:{" "}
+                      {formatarMoeda(item.custo_material)}
+                    </small>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="financeiro-detalhes">
+        <div className="financeiro-section-header">
+          <div>
+            <h2>Despesas</h2>
+            <p>Gastos registrados separadamente dos atendimentos.</p>
+          </div>
+        </div>
+
+        {despesas.length === 0 ? (
+          <div className="financeiro-vazio">
+            <ArrowDown size={32} />
+            <strong>Nenhuma despesa registrada</strong>
+            <span>
+              Suas despesas fixas e avulsas aparecerão aqui.
+            </span>
+          </div>
+        ) : (
+          <div className="financeiro-lista">
+            {despesas.map((despesa) => (
+              <article
+                className="financeiro-lancamento"
+                key={despesa.id}
+              >
+                <div>
+                  <strong>{despesa.descricao}</strong>
+
+                  <span>
+                    {despesa.categoria} · {despesa.tipo}
+                  </span>
+
+                  <small>
+                    {new Date(
+                      `${despesa.data}T00:00:00`
+                    ).toLocaleDateString("pt-BR")}
+                  </small>
+                </div>
+
+                <div className="financeiro-valores despesa-valor">
+                  <strong>
+                    - {formatarMoeda(despesa.valor)}
+                  </strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
-}
+};
+
+export default Financeiro;
