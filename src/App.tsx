@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Financeiro from "./pages/Financeiro";
+
 import { supabase } from "./lib/supabase";
 
 import {
@@ -9,7 +9,7 @@ import {
 
 import { Dashboard } from "./pages/Dashboard";
 import { Agenda } from "./pages/Agenda";
-import { Financeiro } from "./pages/Financeiro";
+import Financeiro from "./pages/Financeiro";
 import { Servicos } from "./pages/Servicos";
 import { Clientes } from "./pages/Clientes";
 
