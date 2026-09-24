@@ -1,17 +1,9 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type DiaSemana = {
   data: Date;
   nome: string;
 };
-
-function formatarData(data: Date) {
-  return data.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-  });
-}
 
 function formatarDiaCompleto(data: Date) {
   return data.toLocaleDateString("pt-BR", {
@@ -25,7 +17,6 @@ function inicioDaSemana(data: Date) {
   const resultado = new Date(data);
   const dia = resultado.getDay();
 
-  // Segunda-feira = 0
   const diferenca = dia === 0 ? -6 : 1 - dia;
 
   resultado.setDate(resultado.getDate() + diferenca);
@@ -45,21 +36,27 @@ function mesmaData(a: Date, b: Date) {
 export function Agenda() {
   const hoje = useMemo(() => {
     const data = new Date();
+
     data.setHours(0, 0, 0, 0);
+
     return data;
   }, []);
 
-  const [dataSelecionada, setDataSelecionada] = useState(hoje);
+  const [dataSelecionada, setDataSelecionada] =
+    useState(hoje);
 
-  const [semanaAtual, setSemanaAtual] = useState(
-    inicioDaSemana(hoje)
+  const semanaAtual = useMemo(
+    () => inicioDaSemana(dataSelecionada),
+    [dataSelecionada]
   );
 
   const dias = useMemo<DiaSemana[]>(() => {
     return Array.from({ length: 7 }, (_, index) => {
       const data = new Date(semanaAtual);
 
-      data.setDate(semanaAtual.getDate() + index);
+      data.setDate(
+        semanaAtual.getDate() + index
+      );
 
       return {
         data,
@@ -72,31 +69,6 @@ export function Agenda() {
       };
     });
   }, [semanaAtual]);
-
-  function selecionarDia(data: Date) {
-    setDataSelecionada(data);
-  }
-
-  function semanaAnterior() {
-    setSemanaAtual((atual) => {
-      const nova = new Date(atual);
-      nova.setDate(nova.getDate() - 7);
-      return nova;
-    });
-  }
-
-  function proximaSemana() {
-    setSemanaAtual((atual) => {
-      const nova = new Date(atual);
-      nova.setDate(nova.getDate() + 7);
-      return nova;
-    });
-  }
-
-  function voltarParaHoje() {
-    setDataSelecionada(hoje);
-    setSemanaAtual(inicioDaSemana(hoje));
-  }
 
   const horarios = [
     "08:00",
@@ -126,32 +98,6 @@ export function Agenda() {
         <div className="avatar">LU</div>
       </header>
 
-      <div className="calendar-navigation">
-        <button
-          type="button"
-          onClick={semanaAnterior}
-          aria-label="Semana anterior"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <button
-          type="button"
-          className="today-button"
-          onClick={voltarParaHoje}
-        >
-          Hoje
-        </button>
-
-        <button
-          type="button"
-          onClick={proximaSemana}
-          aria-label="Próxima semana"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
       <div className="week">
         {dias.map((dia) => {
           const selecionado = mesmaData(
@@ -166,10 +112,12 @@ export function Agenda() {
               className={
                 selecionado ? "selected-day" : ""
               }
-              onClick={() => selecionarDia(dia.data)}
+              onClick={() =>
+                setDataSelecionada(dia.data)
+              }
             >
-              {dia.nome}
-              <br />
+              <span>{dia.nome}</span>
+
               <b>{dia.data.getDate()}</b>
             </button>
           );
@@ -183,6 +131,7 @@ export function Agenda() {
             key={horario}
           >
             <span>{horario}</span>
+
             <b>Disponível</b>
           </div>
         ))}

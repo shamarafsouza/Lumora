@@ -65,35 +65,65 @@ body {
   font-size: 11px;
 }
 
+/* =========================
+   CALENDÁRIO
+   ========================= */
+
 .week {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
   margin: 12px 0 28px;
   color: #846976;
   text-align: center;
   font-size: 11px;
 }
 
-.week span {
+.week button {
+  border: 0;
+  background: transparent;
+  color: #846976;
   padding: 7px 2px;
   line-height: 1.8;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.week b {
+.week button span {
+  display: block;
+}
+
+.week button b {
+  display: block;
   font-size: 15px;
   color: #4b3040;
 }
 
-.week .selected-day {
+.week button.selected-day {
   background: var(--wine);
+  color: #fff;
   border-radius: 13px;
+}
+
+.week button.selected-day b {
   color: #fff;
 }
 
-.week .selected-day b {
-  color: #fff;
+.week button:focus {
+  outline: none;
 }
+
+.week button:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: 2px;
+}
+
+/* =========================
+   AGENDA
+   ========================= */
 
 .timeline {
   display: flex;
@@ -162,6 +192,10 @@ body {
 .available b {
   font-weight: 500;
 }
+
+/* =========================
+   DETALHES DO AGENDAMENTO
+   ========================= */
 
 .sheet-backdrop {
   position: fixed;
@@ -295,6 +329,10 @@ body {
   color: #4d3040;
 }
 
+/* =========================
+   FINANCEIRO
+   ========================= */
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -330,10 +368,18 @@ body {
   color: var(--wine-dark);
 }
 
+/* =========================
+   TÍTULOS
+   ========================= */
+
 .page h2 {
   font: 700 18px 'Playfair Display', serif;
   color: var(--wine-dark);
 }
+
+/* =========================
+   HISTÓRICO
+   ========================= */
 
 .history {
   display: flex;
@@ -383,6 +429,10 @@ body {
   color: var(--wine);
 }
 
+/* =========================
+   SERVIÇOS
+   ========================= */
+
 .service-group {
   margin-top: 22px;
 }
@@ -424,6 +474,10 @@ body {
   font-size: 13px;
   color: var(--wine-dark);
 }
+
+/* =========================
+   CLIENTES
+   ========================= */
 
 .clients-title {
   display: flex;
@@ -491,6 +545,10 @@ body {
 .client-card a svg {
   width: 17px;
 }
+
+/* =========================
+   NAVEGAÇÃO INFERIOR
+   ========================= */
 
 .bottom-nav {
   position: fixed;
