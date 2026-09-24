@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Wallet } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import "./Financeiro.css";
 
 type LancamentoFinanceiro = {
   id: string;
