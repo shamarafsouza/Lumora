@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
-import { servicos as servicosData } from "../data";
 
 type Cliente = {
   id: string;
@@ -25,6 +24,7 @@ type Servico = {
 
 type Agendamento = {
   id: string;
+  profissional_id: string;
   cliente_id: string;
   servico_id: string;
   data: string;
@@ -95,9 +95,7 @@ function nomeStatus(status: Agendamento["status"]) {
 export function Agenda() {
   const hoje = useMemo(() => {
     const data = new Date();
-
     data.setHours(0, 0, 0, 0);
-
     return data;
   }, []);
 
@@ -105,12 +103,7 @@ export function Agenda() {
     useState(hoje);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
-
-  const [servicos, setServicos] =
-    useState<Servico[]>(
-      servicosData as Servico[]
-    );
-
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [agendamentos, setAgendamentos] =
     useState<Agendamento[]>([]);
 
@@ -170,13 +163,6 @@ export function Agenda() {
     "18:00",
   ];
 
-  /*
-   * Carrega os dados da Agenda.
-   *
-   * Clientes e agendamentos vêm do Supabase.
-   * Serviços vêm de ../data, que é a mesma fonte
-   * utilizada pela página Servicos.tsx.
-   */
   async function carregarDados() {
     setCarregando(true);
     setErro("");
@@ -189,17 +175,16 @@ export function Agenda() {
       setErro(
         "Sua sessão expirou. Faça login novamente."
       );
-
       setCarregando(false);
       return;
     }
 
-    const dataBanco = formatarDataBanco(
-      dataSelecionada
-    );
+    const dataBanco =
+      formatarDataBanco(dataSelecionada);
 
     const [
       clientesResponse,
+      servicosResponse,
       agendaResponse,
     ] = await Promise.all([
       supabase
@@ -209,9 +194,22 @@ export function Agenda() {
         .order("nome"),
 
       supabase
+        .from("servicos")
+        .select(
+          "id, nome, categoria, duracao, preco"
+        )
+        .eq("profissional_id", user.id)
+        .order("categoria", {
+          ascending: true,
+        })
+        .order("nome", {
+          ascending: true,
+        }),
+
+      supabase
         .from("agendamentos")
         .select(
-          "id, cliente_id, servico_id, data, horario, status"
+          "id, profissional_id, cliente_id, servico_id, data, horario, status"
         )
         .eq("profissional_id", user.id)
         .eq("data", dataBanco)
@@ -227,6 +225,20 @@ export function Agenda() {
 
       setErro(
         "Não foi possível carregar suas clientes."
+      );
+
+      setCarregando(false);
+      return;
+    }
+
+    if (servicosResponse.error) {
+      console.error(
+        "Erro ao carregar serviços:",
+        servicosResponse.error
+      );
+
+      setErro(
+        "Não foi possível carregar seus serviços."
       );
 
       setCarregando(false);
@@ -250,7 +262,13 @@ export function Agenda() {
     setClientes(clientesResponse.data ?? []);
 
     setServicos(
-      servicosData as Servico[]
+      (servicosResponse.data ?? []).map(
+        (servico) => ({
+          ...servico,
+          duracao: Number(servico.duracao),
+          preco: Number(servico.preco),
+        })
+      )
     );
 
     setAgendamentos(
@@ -264,14 +282,7 @@ export function Agenda() {
     carregarDados();
   }, [dataSelecionada]);
 
-  /*
-   * Atualiza somente os clientes antes de abrir
-   * o modal de agendamento.
-   *
-   * Isso garante que uma cliente cadastrada
-   * recentemente apareça imediatamente.
-   */
-  async function atualizarClientes() {
+  async function atualizarDadosModal() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -284,16 +295,34 @@ export function Agenda() {
       return false;
     }
 
-    const { data, error } = await supabase
-      .from("clientes")
-      .select("id, nome, telefone")
-      .eq("profissional_id", user.id)
-      .order("nome");
+    const [
+      clientesResponse,
+      servicosResponse,
+    ] = await Promise.all([
+      supabase
+        .from("clientes")
+        .select("id, nome, telefone")
+        .eq("profissional_id", user.id)
+        .order("nome"),
 
-    if (error) {
+      supabase
+        .from("servicos")
+        .select(
+          "id, nome, categoria, duracao, preco"
+        )
+        .eq("profissional_id", user.id)
+        .order("categoria", {
+          ascending: true,
+        })
+        .order("nome", {
+          ascending: true,
+        }),
+    ]);
+
+    if (clientesResponse.error) {
       console.error(
         "Erro ao atualizar clientes:",
-        error
+        clientesResponse.error
       );
 
       setErro(
@@ -303,10 +332,31 @@ export function Agenda() {
       return false;
     }
 
-    setClientes(data ?? []);
+    if (servicosResponse.error) {
+      console.error(
+        "Erro ao atualizar serviços:",
+        servicosResponse.error
+      );
+
+      setErro(
+        "Não foi possível carregar seus serviços."
+      );
+
+      return false;
+    }
+
+    setClientes(
+      clientesResponse.data ?? []
+    );
 
     setServicos(
-      servicosData as Servico[]
+      (servicosResponse.data ?? []).map(
+        (servico) => ({
+          ...servico,
+          duracao: Number(servico.duracao),
+          preco: Number(servico.preco),
+        })
+      )
     );
 
     return true;
@@ -319,10 +369,13 @@ export function Agenda() {
 
     setClienteId("");
     setServicoId("");
-    setHorario(horarioInicial ?? "08:00");
+    setHorario(
+      horarioInicial ?? "08:00"
+    );
     setStatus("confirmado");
 
-    const atualizado = await atualizarClientes();
+    const atualizado =
+      await atualizarDadosModal();
 
     if (!atualizado) {
       return;
@@ -370,14 +423,15 @@ export function Agenda() {
       return;
     }
 
-    const dataBanco = formatarDataBanco(
-      dataSelecionada
-    );
+    const dataBanco =
+      formatarDataBanco(dataSelecionada);
 
-    const horarioExistente = agendamentos.some(
-      (agendamento) =>
-        agendamento.horario.slice(0, 5) === horario
-    );
+    const horarioExistente =
+      agendamentos.some(
+        (agendamento) =>
+          agendamento.horario.slice(0, 5) ===
+          horario
+      );
 
     if (horarioExistente) {
       setErro(
@@ -388,18 +442,19 @@ export function Agenda() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("agendamentos")
-      .insert({
-        profissional_id: user.id,
-        cliente_id: clienteId,
-        servico_id: servicoId,
-        data: dataBanco,
-        horario,
-        status,
-      })
-      .select()
-      .single();
+    const { data, error } =
+      await supabase
+        .from("agendamentos")
+        .insert({
+          profissional_id: user.id,
+          cliente_id: clienteId,
+          servico_id: servicoId,
+          data: dataBanco,
+          horario,
+          status,
+        })
+        .select()
+        .single();
 
     if (error) {
       console.error(
@@ -408,7 +463,8 @@ export function Agenda() {
       );
 
       setErro(
-        "Não foi possível criar o agendamento."
+        error.message ||
+          "Não foi possível criar o agendamento."
       );
 
       setSalvando(false);
@@ -417,7 +473,9 @@ export function Agenda() {
 
     setAgendamentos((atual) =>
       [...atual, data].sort((a, b) =>
-        a.horario.localeCompare(b.horario)
+        a.horario.localeCompare(
+          b.horario
+        )
       )
     );
 
@@ -427,13 +485,15 @@ export function Agenda() {
 
   function obterCliente(id: string) {
     return clientes.find(
-      (cliente) => cliente.id === id
+      (cliente) =>
+        cliente.id === id
     );
   }
 
   function obterServico(id: string) {
     return servicos.find(
-      (servico) => servico.id === id
+      (servico) =>
+        servico.id === id
     );
   }
 
@@ -477,16 +537,19 @@ export function Agenda() {
             <Plus size={20} />
           </button>
 
-          <div className="avatar">LU</div>
+          <div className="avatar">
+            LU
+          </div>
         </div>
       </header>
 
       <div className="week">
         {dias.map((dia) => {
-          const selecionado = mesmaData(
-            dia.data,
-            dataSelecionada
-          );
+          const selecionado =
+            mesmaData(
+              dia.data,
+              dataSelecionada
+            );
 
           return (
             <button
@@ -503,9 +566,13 @@ export function Agenda() {
                 )
               }
             >
-              <span>{dia.nome}</span>
+              <span>
+                {dia.nome}
+              </span>
 
-              <b>{dia.data.getDate()}</b>
+              <b>
+                {dia.data.getDate()}
+              </b>
             </button>
           );
         })}
@@ -556,7 +623,9 @@ export function Agenda() {
                     {horario}
                   </span>
 
-                  <b>Disponível</b>
+                  <b>
+                    Disponível
+                  </b>
                 </button>
               );
             }
@@ -612,7 +681,9 @@ export function Agenda() {
       {modalAberto && (
         <div
           className="agenda-modal-backdrop"
-          onClick={fecharAgendamento}
+          onClick={
+            fecharAgendamento
+          }
         >
           <section
             className="agenda-modal"
@@ -868,7 +939,10 @@ export function Agenda() {
             </h2>
 
             <p className="muted">
-              Hoje às{" "}
+              {formatarDiaCompleto(
+                dataSelecionada
+              )}{" "}
+              às{" "}
               {agendamentoSelecionado
                 .agendamento.horario.slice(
                   0,
