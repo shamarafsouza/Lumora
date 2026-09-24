@@ -206,6 +206,10 @@ export function Agenda() {
           ascending: true,
         }),
 
+        console.log("USUÁRIO LOGADO:", user.id);
+        console.log("SERVIÇOS RETORNADOS:", servicosResponse.data);
+        console.log("ERRO DOS SERVIÇOS:", servicosResponse.error);
+
       supabase
         .from("agendamentos")
         .select(
