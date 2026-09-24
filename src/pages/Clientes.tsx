@@ -114,12 +114,19 @@ export function Clientes() {
       .select()
       .single();
 
-    if (error) {
-      console.error(error);
-      setErro("Não foi possível cadastrar a cliente.");
-      setSalvando(false);
-      return;
-    }
+        if (error) {
+          console.error("ERRO SUPABASE:", error);
+
+          setErro(
+            error.message ||
+              error.details ||
+              error.hint ||
+              "Não foi possível cadastrar a cliente."
+          );
+
+          setSalvando(false);
+          return;
+        }
 
     setClientes((atual) =>
       [...atual, data].sort((a, b) =>
