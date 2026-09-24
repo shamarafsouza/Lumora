@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import Financeiro from "./pages/Financeiro";
 import { supabase } from "./lib/supabase";
 
 import {
