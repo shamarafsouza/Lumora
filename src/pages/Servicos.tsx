@@ -29,11 +29,17 @@ export function Servicos() {
       </header>
 
       {Object.entries(groups).map(([categoria, lista]) => (
-        <section className="service-group" key={categoria}>
+        <section
+          className="service-group"
+          key={categoria}
+        >
           <h2>{categoria}</h2>
 
           {lista.map((servico) => (
-            <article className="service-card" key={servico.id}>
+            <article
+              className="service-card"
+              key={servico.id}
+            >
               <div>
                 <strong>{servico.nome}</strong>
 
@@ -44,7 +50,10 @@ export function Servicos() {
               </div>
 
               <b>
-                R$ {servico.preco.toFixed(2).replace(".", ",")}
+                R${" "}
+                {servico.preco
+                  .toFixed(2)
+                  .replace(".", ",")}
               </b>
             </article>
           ))}

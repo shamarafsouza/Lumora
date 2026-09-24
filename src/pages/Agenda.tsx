@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
+import { servicos as servicosData } from "../data";
 
 type Cliente = {
   id: string;
@@ -104,7 +105,12 @@ export function Agenda() {
     useState(hoje);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [servicos, setServicos] = useState<Servico[]>([]);
+
+  const [servicos, setServicos] =
+    useState<Servico[]>(
+      servicosData as Servico[]
+    );
+
   const [agendamentos, setAgendamentos] =
     useState<Agendamento[]>([]);
 
@@ -116,6 +122,7 @@ export function Agenda() {
   const [clienteId, setClienteId] = useState("");
   const [servicoId, setServicoId] = useState("");
   const [horario, setHorario] = useState("08:00");
+
   const [status, setStatus] =
     useState<"confirmado" | "pendente">("confirmado");
 
@@ -163,6 +170,13 @@ export function Agenda() {
     "18:00",
   ];
 
+  /*
+   * Carrega os dados da Agenda.
+   *
+   * Clientes e agendamentos vêm do Supabase.
+   * Serviços vêm de ../data, que é a mesma fonte
+   * utilizada pela página Servicos.tsx.
+   */
   async function carregarDados() {
     setCarregando(true);
     setErro("");
@@ -172,7 +186,10 @@ export function Agenda() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       setCarregando(false);
       return;
     }
@@ -183,20 +200,11 @@ export function Agenda() {
 
     const [
       clientesResponse,
-      servicosResponse,
       agendaResponse,
     ] = await Promise.all([
       supabase
         .from("clientes")
         .select("id, nome, telefone")
-        .eq("profissional_id", user.id)
-        .order("nome"),
-
-      supabase
-        .from("servicos")
-        .select(
-          "id, nome, categoria, duracao, preco"
-        )
         .eq("profissional_id", user.id)
         .order("nome"),
 
@@ -212,7 +220,10 @@ export function Agenda() {
     ]);
 
     if (clientesResponse.error) {
-      console.error(clientesResponse.error);
+      console.error(
+        "Erro ao carregar clientes:",
+        clientesResponse.error
+      );
 
       setErro(
         "Não foi possível carregar suas clientes."
@@ -222,19 +233,11 @@ export function Agenda() {
       return;
     }
 
-    if (servicosResponse.error) {
-      console.error(servicosResponse.error);
-
-      setErro(
-        "Não foi possível carregar seus serviços."
-      );
-
-      setCarregando(false);
-      return;
-    }
-
     if (agendaResponse.error) {
-      console.error(agendaResponse.error);
+      console.error(
+        "Erro ao carregar agendamentos:",
+        agendaResponse.error
+      );
 
       setErro(
         "Não foi possível carregar sua agenda."
@@ -245,8 +248,14 @@ export function Agenda() {
     }
 
     setClientes(clientesResponse.data ?? []);
-    setServicos(servicosResponse.data ?? []);
-    setAgendamentos(agendaResponse.data ?? []);
+
+    setServicos(
+      servicosData as Servico[]
+    );
+
+    setAgendamentos(
+      agendaResponse.data ?? []
+    );
 
     setCarregando(false);
   }
@@ -256,43 +265,36 @@ export function Agenda() {
   }, [dataSelecionada]);
 
   /*
-   * Atualiza clientes e serviços novamente antes
-   * de abrir o modal.
+   * Atualiza somente os clientes antes de abrir
+   * o modal de agendamento.
    *
-   * Isso evita que a Agenda fique com uma lista antiga
-   * depois que uma nova cliente foi cadastrada.
+   * Isso garante que uma cliente cadastrada
+   * recentemente apareça imediatamente.
    */
-  async function atualizarClientesEServicos() {
+  async function atualizarClientes() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       return false;
     }
 
-    const [
-      clientesResponse,
-      servicosResponse,
-    ] = await Promise.all([
-      supabase
-        .from("clientes")
-        .select("id, nome, telefone")
-        .eq("profissional_id", user.id)
-        .order("nome"),
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("id, nome, telefone")
+      .eq("profissional_id", user.id)
+      .order("nome");
 
-      supabase
-        .from("servicos")
-        .select(
-          "id, nome, categoria, duracao, preco"
-        )
-        .eq("profissional_id", user.id)
-        .order("nome"),
-    ]);
-
-    if (clientesResponse.error) {
-      console.error(clientesResponse.error);
+    if (error) {
+      console.error(
+        "Erro ao atualizar clientes:",
+        error
+      );
 
       setErro(
         "Não foi possível carregar suas clientes."
@@ -301,18 +303,11 @@ export function Agenda() {
       return false;
     }
 
-    if (servicosResponse.error) {
-      console.error(servicosResponse.error);
+    setClientes(data ?? []);
 
-      setErro(
-        "Não foi possível carregar seus serviços."
-      );
-
-      return false;
-    }
-
-    setClientes(clientesResponse.data ?? []);
-    setServicos(servicosResponse.data ?? []);
+    setServicos(
+      servicosData as Servico[]
+    );
 
     return true;
   }
@@ -327,10 +322,9 @@ export function Agenda() {
     setHorario(horarioInicial ?? "08:00");
     setStatus("confirmado");
 
-    const dadosAtualizados =
-      await atualizarClientesEServicos();
+    const atualizado = await atualizarClientes();
 
-    if (!dadosAtualizados) {
+    if (!atualizado) {
       return;
     }
 
@@ -368,7 +362,10 @@ export function Agenda() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       setSalvando(false);
       return;
     }
@@ -405,7 +402,10 @@ export function Agenda() {
       .single();
 
     if (error) {
-      console.error(error);
+      console.error(
+        "Erro ao criar agendamento:",
+        error
+      );
 
       setErro(
         "Não foi possível criar o agendamento."
@@ -441,9 +441,11 @@ export function Agenda() {
     selecionado
       ? {
           agendamento: selecionado,
+
           cliente: obterCliente(
             selecionado.cliente_id
           ),
+
           servico: obterServico(
             selecionado.servico_id
           ),
@@ -467,7 +469,9 @@ export function Agenda() {
           <button
             type="button"
             className="agenda-add"
-            onClick={() => abrirAgendamento()}
+            onClick={() =>
+              abrirAgendamento()
+            }
             aria-label="Novo agendamento"
           >
             <Plus size={20} />
@@ -494,7 +498,9 @@ export function Agenda() {
                   : ""
               }
               onClick={() =>
-                setDataSelecionada(dia.data)
+                setDataSelecionada(
+                  dia.data
+                )
               }
             >
               <span>{dia.nome}</span>
@@ -518,7 +524,9 @@ export function Agenda() {
             className="spin"
           />
 
-          <span>Carregando agenda...</span>
+          <span>
+            Carregando agenda...
+          </span>
         </div>
       ) : (
         <section className="timeline">
@@ -526,8 +534,10 @@ export function Agenda() {
             const agendamento =
               agendamentos.find(
                 (item) =>
-                  item.horario.slice(0, 5) ===
-                  horario
+                  item.horario.slice(
+                    0,
+                    5
+                  ) === horario
               );
 
             if (!agendamento) {
@@ -537,23 +547,29 @@ export function Agenda() {
                   className="available available-button"
                   key={horario}
                   onClick={() =>
-                    abrirAgendamento(horario)
+                    abrirAgendamento(
+                      horario
+                    )
                   }
                 >
-                  <span>{horario}</span>
+                  <span>
+                    {horario}
+                  </span>
 
                   <b>Disponível</b>
                 </button>
               );
             }
 
-            const cliente = obterCliente(
-              agendamento.cliente_id
-            );
+            const cliente =
+              obterCliente(
+                agendamento.cliente_id
+              );
 
-            const servico = obterServico(
-              agendamento.servico_id
-            );
+            const servico =
+              obterServico(
+                agendamento.servico_id
+              );
 
             return (
               <button
@@ -561,7 +577,9 @@ export function Agenda() {
                 key={agendamento.id}
                 className={`appointment ${agendamento.status}`}
                 onClick={() =>
-                  setSelecionado(agendamento)
+                  setSelecionado(
+                    agendamento
+                  )
                 }
               >
                 <span className="slot-time">
@@ -605,7 +623,9 @@ export function Agenda() {
             <button
               type="button"
               className="agenda-modal-close"
-              onClick={fecharAgendamento}
+              onClick={
+                fecharAgendamento
+              }
               aria-label="Fechar"
             >
               <X size={19} />
@@ -613,7 +633,9 @@ export function Agenda() {
 
             <div className="agenda-modal-handle" />
 
-            <h2>Agendar atendimento</h2>
+            <h2>
+              Agendar atendimento
+            </h2>
 
             <p>
               {formatarDiaCompleto(
@@ -628,8 +650,8 @@ export function Agenda() {
                 </strong>
 
                 <span>
-                  Cadastre uma cliente antes de
-                  criar um agendamento.
+                  Cadastre uma cliente antes
+                  de criar um agendamento.
                 </span>
               </div>
             ) : servicos.length === 0 ? (
@@ -639,13 +661,15 @@ export function Agenda() {
                 </strong>
 
                 <span>
-                  Cadastre um serviço antes de
-                  criar um agendamento.
+                  Cadastre um serviço antes
+                  de criar um agendamento.
                 </span>
               </div>
             ) : (
               <form
-                onSubmit={salvarAgendamento}
+                onSubmit={
+                  salvarAgendamento
+                }
                 className="agenda-form"
               >
                 <label>
@@ -663,14 +687,16 @@ export function Agenda() {
                       Selecione uma cliente
                     </option>
 
-                    {clientes.map((cliente) => (
-                      <option
-                        key={cliente.id}
-                        value={cliente.id}
-                      >
-                        {cliente.nome}
-                      </option>
-                    ))}
+                    {clientes.map(
+                      (cliente) => (
+                        <option
+                          key={cliente.id}
+                          value={cliente.id}
+                        >
+                          {cliente.nome}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
 
@@ -689,17 +715,21 @@ export function Agenda() {
                       Selecione um serviço
                     </option>
 
-                    {servicos.map((servico) => (
-                      <option
-                        key={servico.id}
-                        value={servico.id}
-                      >
-                        {servico.nome} —{" "}
-                        {formatarValor(
-                          Number(servico.preco)
-                        )}
-                      </option>
-                    ))}
+                    {servicos.map(
+                      (servico) => (
+                        <option
+                          key={servico.id}
+                          value={servico.id}
+                        >
+                          {servico.nome} —{" "}
+                          {formatarValor(
+                            Number(
+                              servico.preco
+                            )
+                          )}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
 
@@ -714,14 +744,16 @@ export function Agenda() {
                       )
                     }
                   >
-                    {horarios.map((hora) => (
-                      <option
-                        key={hora}
-                        value={hora}
-                      >
-                        {hora}
-                      </option>
-                    ))}
+                    {horarios.map(
+                      (hora) => (
+                        <option
+                          key={hora}
+                          value={hora}
+                        >
+                          {hora}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
 
@@ -793,7 +825,9 @@ export function Agenda() {
               <button
                 type="button"
                 className="agenda-cancel full"
-                onClick={fecharAgendamento}
+                onClick={
+                  fecharAgendamento
+                }
               >
                 Fechar
               </button>
@@ -805,7 +839,9 @@ export function Agenda() {
       {agendamentoSelecionado && (
         <div
           className="sheet-backdrop"
-          onClick={() => setSelecionado(null)}
+          onClick={() =>
+            setSelecionado(null)
+          }
         >
           <section
             className="sheet"
@@ -826,16 +862,18 @@ export function Agenda() {
             <div className="handle" />
 
             <h2>
-              {agendamentoSelecionado.cliente
-                ?.nome ?? "Cliente"}
+              {agendamentoSelecionado
+                .cliente?.nome ??
+                "Cliente"}
             </h2>
 
             <p className="muted">
               Hoje às{" "}
-              {agendamentoSelecionado.agendamento.horario.slice(
-                0,
-                5
-              )}{" "}
+              {agendamentoSelecionado
+                .agendamento.horario.slice(
+                  0,
+                  5
+                )}{" "}
               •{" "}
               {nomeStatus(
                 agendamentoSelecionado
@@ -844,39 +882,48 @@ export function Agenda() {
             </p>
 
             <div className="detail">
-              <span>Procedimento:</span>
+              <span>
+                Procedimento:
+              </span>
 
               <b>
-                {agendamentoSelecionado.servico
-                  ?.nome ?? "—"}
+                {agendamentoSelecionado
+                  .servico?.nome ??
+                  "—"}
               </b>
 
-              <span>Duração:</span>
+              <span>
+                Duração:
+              </span>
 
               <b>
-                {agendamentoSelecionado.servico
-                  ?.duracao ?? 0}{" "}
+                {agendamentoSelecionado
+                  .servico?.duracao ??
+                  0}{" "}
                 minutos
               </b>
             </div>
 
             <div className="money">
               <div>
-                <span>Valor cobrado</span>
+                <span>
+                  Valor cobrado
+                </span>
 
                 <b>
                   {formatarValor(
                     Number(
                       agendamentoSelecionado
-                        .servico?.preco ?? 0
+                        .servico?.preco ??
+                        0
                     )
                   )}
                 </b>
               </div>
             </div>
 
-            {agendamentoSelecionado.cliente
-              ?.telefone && (
+            {agendamentoSelecionado
+              .cliente?.telefone && (
               <a
                 className="whatsapp"
                 href={`https://wa.me/${agendamentoSelecionado.cliente.telefone.replace(
