@@ -585,3 +585,237 @@ body {
 .bottom-nav button.active {
   color: var(--wine);
 }
+
+/* =========================
+   CLIENTES - AÇÕES
+   ========================= */
+
+.add-client-button {
+  width: 100%;
+  height: 44px;
+  margin-bottom: 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--wine);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px #6b30401a;
+}
+
+.add-client-button:hover {
+  background: var(--wine-dark);
+}
+
+.clients-loading {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.clients-empty {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.clients-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f3e4e8;
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+}
+
+.clients-empty h3 {
+  margin: 0;
+  color: var(--wine-dark);
+  font: 600 17px 'Playfair Display', serif;
+}
+
+.clients-empty p {
+  max-width: 270px;
+  margin: 7px 0 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.clients-empty button {
+  border: 0;
+  border-radius: 11px;
+  background: var(--wine);
+  color: #fff;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.client-error {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f9e7eb;
+  color: var(--wine-dark);
+  font-size: 11px;
+}
+
+.client-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #21151d66;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+
+.client-modal {
+  width: min(430px, 100%);
+  background: #fff;
+  border-radius: 25px 25px 0 0;
+  padding: 14px 22px 25px;
+  box-shadow: 0 -10px 40px #21151d26;
+  position: relative;
+}
+
+.client-modal-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 5px;
+  background: #e5d9dd;
+  margin: 0 auto 20px;
+}
+
+.client-modal-close {
+  position: absolute;
+  right: 15px;
+  top: 12px;
+  border: 0;
+  background: transparent;
+  color: #8d7580;
+  cursor: pointer;
+}
+
+.client-modal h2 {
+  margin: 0;
+  font: 700 20px 'Playfair Display', serif;
+  color: var(--wine-dark);
+}
+
+.client-modal > p {
+  margin: 5px 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.client-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.client-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #765e69;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.client-modal input,
+.client-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbf5f1;
+  color: #4b3040;
+  padding: 11px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.client-modal textarea {
+  resize: none;
+}
+
+.client-modal input:focus,
+.client-modal textarea:focus {
+  border-color: var(--wine);
+}
+
+.client-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.client-modal-actions button {
+  height: 43px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.client-cancel {
+  border: 1px solid var(--wine);
+  background: #fff;
+  color: var(--wine);
+}
+
+.client-save {
+  border: 0;
+  background: var(--wine);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.client-save:disabled,
+.client-cancel:disabled,
+.add-client-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
