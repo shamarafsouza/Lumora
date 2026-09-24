@@ -181,47 +181,65 @@ export function Agenda() {
       dataSelecionada
     );
 
-    const [clientesResponse, servicosResponse, agendaResponse] =
-      await Promise.all([
-        supabase
-          .from("clientes")
-          .select("id, nome, telefone")
-          .eq("profissional_id", user.id)
-          .order("nome"),
+    const [
+      clientesResponse,
+      servicosResponse,
+      agendaResponse,
+    ] = await Promise.all([
+      supabase
+        .from("clientes")
+        .select("id, nome, telefone")
+        .eq("profissional_id", user.id)
+        .order("nome"),
 
-        supabase
-          .from("servicos")
-          .select(
-            "id, nome, categoria, duracao, preco"
-          )
-          .eq("profissional_id", user.id)
-          .order("nome"),
+      supabase
+        .from("servicos")
+        .select(
+          "id, nome, categoria, duracao, preco"
+        )
+        .eq("profissional_id", user.id)
+        .order("nome"),
 
-        supabase
-          .from("agendamentos")
-          .select(
-            "id, cliente_id, servico_id, data, horario, status"
-          )
-          .eq("profissional_id", user.id)
-          .eq("data", dataBanco)
-          .neq("status", "cancelado")
-          .order("horario"),
-      ]);
+      supabase
+        .from("agendamentos")
+        .select(
+          "id, cliente_id, servico_id, data, horario, status"
+        )
+        .eq("profissional_id", user.id)
+        .eq("data", dataBanco)
+        .neq("status", "cancelado")
+        .order("horario"),
+    ]);
 
     if (clientesResponse.error) {
-      setErro("Não foi possível carregar suas clientes.");
+      console.error(clientesResponse.error);
+
+      setErro(
+        "Não foi possível carregar suas clientes."
+      );
+
       setCarregando(false);
       return;
     }
 
     if (servicosResponse.error) {
-      setErro("Não foi possível carregar seus serviços.");
+      console.error(servicosResponse.error);
+
+      setErro(
+        "Não foi possível carregar seus serviços."
+      );
+
       setCarregando(false);
       return;
     }
 
     if (agendaResponse.error) {
-      setErro("Não foi possível carregar sua agenda.");
+      console.error(agendaResponse.error);
+
+      setErro(
+        "Não foi possível carregar sua agenda."
+      );
+
       setCarregando(false);
       return;
     }
@@ -237,13 +255,84 @@ export function Agenda() {
     carregarDados();
   }, [dataSelecionada]);
 
-  function abrirAgendamento(horarioInicial?: string) {
+  /*
+   * Atualiza clientes e serviços novamente antes
+   * de abrir o modal.
+   *
+   * Isso evita que a Agenda fique com uma lista antiga
+   * depois que uma nova cliente foi cadastrada.
+   */
+  async function atualizarClientesEServicos() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente.");
+      return false;
+    }
+
+    const [
+      clientesResponse,
+      servicosResponse,
+    ] = await Promise.all([
+      supabase
+        .from("clientes")
+        .select("id, nome, telefone")
+        .eq("profissional_id", user.id)
+        .order("nome"),
+
+      supabase
+        .from("servicos")
+        .select(
+          "id, nome, categoria, duracao, preco"
+        )
+        .eq("profissional_id", user.id)
+        .order("nome"),
+    ]);
+
+    if (clientesResponse.error) {
+      console.error(clientesResponse.error);
+
+      setErro(
+        "Não foi possível carregar suas clientes."
+      );
+
+      return false;
+    }
+
+    if (servicosResponse.error) {
+      console.error(servicosResponse.error);
+
+      setErro(
+        "Não foi possível carregar seus serviços."
+      );
+
+      return false;
+    }
+
+    setClientes(clientesResponse.data ?? []);
+    setServicos(servicosResponse.data ?? []);
+
+    return true;
+  }
+
+  async function abrirAgendamento(
+    horarioInicial?: string
+  ) {
     setErro("");
 
     setClienteId("");
     setServicoId("");
     setHorario(horarioInicial ?? "08:00");
     setStatus("confirmado");
+
+    const dadosAtualizados =
+      await atualizarClientesEServicos();
+
+    if (!dadosAtualizados) {
+      return;
+    }
 
     setModalAberto(true);
   }
@@ -297,6 +386,7 @@ export function Agenda() {
       setErro(
         "Já existe um atendimento nesse horário."
       );
+
       setSalvando(false);
       return;
     }
@@ -516,6 +606,7 @@ export function Agenda() {
               type="button"
               className="agenda-modal-close"
               onClick={fecharAgendamento}
+              aria-label="Fechar"
             >
               <X size={19} />
             </button>
@@ -686,6 +777,7 @@ export function Agenda() {
                           size={17}
                           className="spin"
                         />
+
                         Salvando...
                       </>
                     ) : (
