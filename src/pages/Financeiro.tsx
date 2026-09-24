@@ -1,6 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Wallet } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Plus,
+  Wallet,
+  X,
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
+
+type Cliente = {
+  id: string;
+  nome: string;
+};
+
+type Servico = {
+  id: string;
+  nome: string;
+  preco: number;
+};
+
+type Agendamento = {
+  id: string;
+  cliente_id: string;
+  servico_id: string;
+  data: string;
+  horario: string;
+  status: string;
+};
 
 type LancamentoFinanceiro = {
   id: string;
@@ -22,6 +48,8 @@ type Despesa = {
   observacoes: string | null;
 };
 
+type TipoLancamento = "receita" | "despesa";
+
 const formatarMoeda = (valor: number) =>
   valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -29,27 +57,69 @@ const formatarMoeda = (valor: number) =>
   });
 
 const Financeiro = () => {
-  const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
+  const [lancamentos, setLancamentos] = useState<
+    LancamentoFinanceiro[]
+  >([]);
+
   const [despesas, setDespesas] = useState<Despesa[]>([]);
+
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>(
+    []
+  );
+
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
 
-  const carregarFinanceiro = async () => {
+  const [modalAberto, setModalAberto] = useState(false);
+
+  const [tipoLancamento, setTipoLancamento] =
+    useState<TipoLancamento>("receita");
+
+  const [agendamentoId, setAgendamentoId] = useState("");
+  const [valorRecebido, setValorRecebido] = useState("");
+  const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [custoMaterial, setCustoMaterial] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+
+  const [descricaoDespesa, setDescricaoDespesa] = useState("");
+  const [categoriaDespesa, setCategoriaDespesa] =
+    useState("Outros");
+  const [tipoDespesa, setTipoDespesa] = useState("avulsa");
+  const [valorDespesa, setValorDespesa] = useState("");
+  const [dataDespesa, setDataDespesa] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+
+  async function carregarFinanceiro() {
     setCarregando(true);
+    setErro("");
 
-    const { data: userData } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!userData.user) {
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente.");
       setCarregando(false);
       return;
     }
 
-    const [financeiroResponse, despesasResponse] = await Promise.all([
+    const [
+      financeiroResponse,
+      despesasResponse,
+      clientesResponse,
+      servicosResponse,
+      agendamentosResponse,
+    ] = await Promise.all([
       supabase
         .from("financeiro_atendimentos")
         .select(
           "id, agendamento_id, valor_recebido, forma_pagamento, custo_material, observacoes, created_at"
         )
-        .eq("profissional_id", userData.user.id)
+        .eq("profissional_id", user.id)
         .order("created_at", { ascending: false }),
 
       supabase
@@ -57,22 +127,38 @@ const Financeiro = () => {
         .select(
           "id, descricao, categoria, tipo, valor, data, observacoes"
         )
-        .eq("profissional_id", userData.user.id)
+        .eq("profissional_id", user.id)
         .order("data", { ascending: false }),
+
+      supabase
+        .from("clientes")
+        .select("id, nome")
+        .eq("profissional_id", user.id)
+        .order("nome"),
+
+      supabase
+        .from("servicos")
+        .select("id, nome, preco")
+        .eq("profissional_id", user.id)
+        .order("nome"),
+
+      supabase
+        .from("agendamentos")
+        .select(
+          "id, cliente_id, servico_id, data, horario, status"
+        )
+        .eq("profissional_id", user.id)
+        .order("data", { ascending: false })
+        .order("horario", { ascending: false }),
     ]);
 
     if (financeiroResponse.error) {
-      console.error(
-        "Erro ao carregar financeiro:",
-        financeiroResponse.error
-      );
+      console.error(financeiroResponse.error);
+      setErro("Não foi possível carregar o financeiro.");
     }
 
     if (despesasResponse.error) {
-      console.error(
-        "Erro ao carregar despesas:",
-        despesasResponse.error
-      );
+      console.error(despesasResponse.error);
     }
 
     setLancamentos(
@@ -90,8 +176,19 @@ const Financeiro = () => {
       }))
     );
 
+    setClientes(clientesResponse.data || []);
+
+    setServicos(
+      (servicosResponse.data || []).map((item) => ({
+        ...item,
+        preco: Number(item.preco),
+      }))
+    );
+
+    setAgendamentos(agendamentosResponse.data || []);
+
     setCarregando(false);
-  };
+  }
 
   useEffect(() => {
     carregarFinanceiro();
@@ -108,74 +205,249 @@ const Financeiro = () => {
       0
     );
 
-    const despesasAvulsas = despesas.reduce(
+    const despesasGerais = despesas.reduce(
       (total, item) => total + item.valor,
       0
     );
 
-    const custos = materiais + despesasAvulsas;
+    const custos = materiais + despesasGerais;
 
     return {
       receitas,
-      materiais,
-      despesasAvulsas,
       custos,
       resultado: receitas - custos,
     };
   }, [lancamentos, despesas]);
 
+  function obterCliente(id: string) {
+    return clientes.find((cliente) => cliente.id === id);
+  }
+
+  function obterServico(id: string) {
+    return servicos.find((servico) => servico.id === id);
+  }
+
+  function abrirModal(tipo: TipoLancamento) {
+    setTipoLancamento(tipo);
+    setErro("");
+
+    setAgendamentoId("");
+    setValorRecebido("");
+    setFormaPagamento("pix");
+    setCustoMaterial("");
+    setObservacoes("");
+
+    setDescricaoDespesa("");
+    setCategoriaDespesa("Outros");
+    setTipoDespesa("avulsa");
+    setValorDespesa("");
+    setDataDespesa(
+      new Date().toISOString().slice(0, 10)
+    );
+
+    setModalAberto(true);
+  }
+
+  function fecharModal() {
+    if (salvando) return;
+    setModalAberto(false);
+  }
+
+  async function salvarLancamento(
+    event: React.FormEvent
+  ) {
+    event.preventDefault();
+    setErro("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente.");
+      return;
+    }
+
+    setSalvando(true);
+
+    if (tipoLancamento === "receita") {
+      const valor = Number(
+        valorRecebido.replace(",", ".")
+      );
+
+      const material = Number(
+        custoMaterial.replace(",", ".") || 0
+      );
+
+      if (!valor || valor <= 0) {
+        setErro("Informe um valor recebido.");
+        setSalvando(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("financeiro_atendimentos")
+        .insert({
+          profissional_id: user.id,
+          agendamento_id: agendamentoId || null,
+          valor_recebido: valor,
+          forma_pagamento: formaPagamento,
+          custo_material: material,
+          observacoes:
+            observacoes.trim() || null,
+        });
+
+      if (error) {
+        console.error(error);
+
+        if (
+          error.code === "23505"
+        ) {
+          setErro(
+            "Esse agendamento já possui um lançamento financeiro."
+          );
+        } else {
+          setErro(
+            error.message ||
+              "Não foi possível registrar a receita."
+          );
+        }
+
+        setSalvando(false);
+        return;
+      }
+    } else {
+      const valor = Number(
+        valorDespesa.replace(",", ".")
+      );
+
+      if (!descricaoDespesa.trim()) {
+        setErro("Informe a descrição da despesa.");
+        setSalvando(false);
+        return;
+      }
+
+      if (!valor || valor <= 0) {
+        setErro("Informe o valor da despesa.");
+        setSalvando(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("despesas")
+        .insert({
+          profissional_id: user.id,
+          descricao: descricaoDespesa.trim(),
+          categoria: categoriaDespesa,
+          tipo: tipoDespesa,
+          valor,
+          data: dataDespesa,
+          observacoes:
+            observacoes.trim() || null,
+        });
+
+      if (error) {
+        console.error(error);
+
+        setErro(
+          error.message ||
+            "Não foi possível registrar a despesa."
+        );
+
+        setSalvando(false);
+        return;
+      }
+    }
+
+    setSalvando(false);
+    setModalAberto(false);
+
+    await carregarFinanceiro();
+  }
+
   return (
-    <main className="financeiro-page">
+    <main className="page financeiro-page">
       <header className="financeiro-header">
         <div>
-          <span className="financeiro-eyebrow">LUMORA</span>
+          <span className="financeiro-eyebrow">
+            LUMORA
+          </span>
+
           <h1>Financeiro</h1>
-          <p>Acompanhe as entradas e saídas do seu negócio.</p>
+
+          <p>Fluxo de caixa do seu negócio.</p>
         </div>
 
-        <button
-          className="financeiro-add"
-          type="button"
-          title="Adicionar despesa"
-        >
-          <Plus size={20} />
-        </button>
+        <div className="avatar">LU</div>
       </header>
 
       <section className="financeiro-resumo">
         <div className="financeiro-card receita">
           <div className="financeiro-card-icon">
-            <ArrowUp size={18} />
+            <ArrowUp size={17} />
           </div>
 
           <span>Receitas</span>
-          <strong>{formatarMoeda(totais.receitas)}</strong>
+
+          <strong>
+            {formatarMoeda(totais.receitas)}
+          </strong>
         </div>
 
         <div className="financeiro-card custo">
           <div className="financeiro-card-icon">
-            <ArrowDown size={18} />
+            <ArrowDown size={17} />
           </div>
 
-          <span>Custos e despesas</span>
-          <strong>{formatarMoeda(totais.custos)}</strong>
+          <span>Custos</span>
+
+          <strong>
+            {formatarMoeda(totais.custos)}
+          </strong>
         </div>
 
         <div className="financeiro-card resultado">
           <div className="financeiro-card-icon">
-            <Wallet size={18} />
+            <Wallet size={17} />
           </div>
 
           <span>Resultado</span>
-          <strong>{formatarMoeda(totais.resultado)}</strong>
+
+          <strong>
+            {formatarMoeda(totais.resultado)}
+          </strong>
         </div>
       </section>
+
+      <div className="financeiro-botoes">
+        <button
+          type="button"
+          onClick={() => abrirModal("receita")}
+        >
+          <ArrowUp size={17} />
+          Adicionar receita
+        </button>
+
+        <button
+          type="button"
+          onClick={() => abrirModal("despesa")}
+        >
+          <ArrowDown size={17} />
+          Adicionar despesa
+        </button>
+      </div>
+
+      {erro && !modalAberto && (
+        <div className="agenda-error">{erro}</div>
+      )}
 
       <section className="financeiro-detalhes">
         <div className="financeiro-section-header">
           <div>
             <h2>Atendimentos</h2>
-            <p>Valores recebidos pelos serviços realizados.</p>
+            <p>
+              Receitas registradas pelos seus atendimentos.
+            </p>
           </div>
         </div>
 
@@ -185,47 +457,68 @@ const Financeiro = () => {
           </div>
         ) : lancamentos.length === 0 ? (
           <div className="financeiro-vazio">
-            <Wallet size={32} />
-            <strong>Nenhum atendimento financeiro</strong>
+            <Wallet size={30} />
+
+            <strong>
+              Nenhuma receita registrada
+            </strong>
+
             <span>
-              Quando você registrar valores recebidos, eles aparecerão aqui.
+              Os valores dos seus atendimentos aparecerão
+              aqui quando forem registrados.
             </span>
           </div>
         ) : (
           <div className="financeiro-lista">
-            {lancamentos.map((item) => (
-              <article
-                className="financeiro-lancamento"
-                key={item.id}
-              >
-                <div>
-                  <strong>Atendimento</strong>
+            {lancamentos.map((item) => {
+              const agendamento = agendamentos.find(
+                (ag) => ag.id === item.agendamento_id
+              );
 
-                  <span>
-                    {new Date(item.created_at).toLocaleDateString(
-                      "pt-BR"
-                    )}
-                  </span>
+              const cliente = agendamento
+                ? obterCliente(agendamento.cliente_id)
+                : null;
 
-                  <small>
-                    Pagamento: {item.forma_pagamento}
-                  </small>
-                </div>
+              const servico = agendamento
+                ? obterServico(agendamento.servico_id)
+                : null;
 
-                <div className="financeiro-valores">
-                  <strong>
-                    {formatarMoeda(item.valor_recebido)}
-                  </strong>
+              return (
+                <article
+                  className="financeiro-lancamento"
+                  key={item.id}
+                >
+                  <div>
+                    <strong>
+                      {cliente?.nome ??
+                        "Receita avulsa"}
+                    </strong>
 
-                  {item.custo_material > 0 && (
+                    <span>
+                      {servico?.nome ??
+                        "Lançamento financeiro"}
+                    </span>
+
                     <small>
-                      Material:{" "}
-                      {formatarMoeda(item.custo_material)}
+                      {item.forma_pagamento}
+                      {item.custo_material > 0
+                        ? ` · Material ${formatarMoeda(
+                            item.custo_material
+                          )}`
+                        : ""}
                     </small>
-                  )}
-                </div>
-              </article>
-            ))}
+                  </div>
+
+                  <div className="financeiro-valores">
+                    <strong>
+                      {formatarMoeda(
+                        item.valor_recebido
+                      )}
+                    </strong>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -234,16 +527,22 @@ const Financeiro = () => {
         <div className="financeiro-section-header">
           <div>
             <h2>Despesas</h2>
-            <p>Gastos registrados separadamente dos atendimentos.</p>
+            <p>
+              Gastos registrados no seu negócio.
+            </p>
           </div>
         </div>
 
         {despesas.length === 0 ? (
           <div className="financeiro-vazio">
-            <ArrowDown size={32} />
-            <strong>Nenhuma despesa registrada</strong>
+            <ArrowDown size={30} />
+
+            <strong>
+              Nenhuma despesa registrada
+            </strong>
+
             <span>
-              Suas despesas fixas e avulsas aparecerão aqui.
+              Suas despesas aparecerão aqui.
             </span>
           </div>
         ) : (
@@ -254,10 +553,13 @@ const Financeiro = () => {
                 key={despesa.id}
               >
                 <div>
-                  <strong>{despesa.descricao}</strong>
+                  <strong>
+                    {despesa.descricao}
+                  </strong>
 
                   <span>
-                    {despesa.categoria} · {despesa.tipo}
+                    {despesa.categoria} ·{" "}
+                    {despesa.tipo}
                   </span>
 
                   <small>
@@ -269,7 +571,10 @@ const Financeiro = () => {
 
                 <div className="financeiro-valores despesa-valor">
                   <strong>
-                    - {formatarMoeda(despesa.valor)}
+                    -{" "}
+                    {formatarMoeda(
+                      despesa.valor
+                    )}
                   </strong>
                 </div>
               </article>
@@ -277,6 +582,301 @@ const Financeiro = () => {
           </div>
         )}
       </section>
+
+      {modalAberto && (
+        <div
+          className="financeiro-modal-backdrop"
+          onClick={fecharModal}
+        >
+          <div
+            className="financeiro-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <button
+              type="button"
+              className="financeiro-modal-close"
+              onClick={fecharModal}
+              disabled={salvando}
+            >
+              <X size={19} />
+            </button>
+
+            <div className="financeiro-modal-handle" />
+
+            <h2>
+              {tipoLancamento === "receita"
+                ? "Adicionar receita"
+                : "Adicionar despesa"}
+            </h2>
+
+            <p>
+              {tipoLancamento === "receita"
+                ? "Registre o valor recebido por um atendimento."
+                : "Registre um gasto do seu negócio."}
+            </p>
+
+            <form
+              className="financeiro-form"
+              onSubmit={salvarLancamento}
+            >
+              {tipoLancamento === "receita" ? (
+                <>
+                  <label>
+                    Atendimento
+                    <select
+                      value={agendamentoId}
+                      onChange={(event) =>
+                        setAgendamentoId(
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option value="">
+                        Receita avulsa
+                      </option>
+
+                      {agendamentos
+                        .filter(
+                          (agendamento) =>
+                            agendamento.status !==
+                            "cancelado"
+                        )
+                        .map((agendamento) => {
+                          const cliente =
+                            obterCliente(
+                              agendamento.cliente_id
+                            );
+
+                          const servico =
+                            obterServico(
+                              agendamento.servico_id
+                            );
+
+                          return (
+                            <option
+                              key={agendamento.id}
+                              value={agendamento.id}
+                            >
+                              {cliente?.nome ??
+                                "Cliente"}{" "}
+                              —{" "}
+                              {servico?.nome ??
+                                "Serviço"}{" "}
+                              —{" "}
+                              {new Date(
+                                `${agendamento.data}T00:00:00`
+                              ).toLocaleDateString(
+                                "pt-BR"
+                              )}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </label>
+
+                  <label>
+                    Valor recebido
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={valorRecebido}
+                      onChange={(event) =>
+                        setValorRecebido(
+                          event.target.value
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Forma de pagamento
+                    <select
+                      value={formaPagamento}
+                      onChange={(event) =>
+                        setFormaPagamento(
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option value="pix">
+                        PIX
+                      </option>
+                      <option value="dinheiro">
+                        Dinheiro
+                      </option>
+                      <option value="debito">
+                        Cartão de débito
+                      </option>
+                      <option value="credito">
+                        Cartão de crédito
+                      </option>
+                      <option value="transferencia">
+                        Transferência
+                      </option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Custo de material
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={custoMaterial}
+                      onChange={(event) =>
+                        setCustoMaterial(
+                          event.target.value
+                        )
+                      }
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label>
+                    Descrição
+                    <input
+                      type="text"
+                      placeholder="Ex.: Compra de materiais"
+                      value={descricaoDespesa}
+                      onChange={(event) =>
+                        setDescricaoDespesa(
+                          event.target.value
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Categoria
+                    <select
+                      value={categoriaDespesa}
+                      onChange={(event) =>
+                        setCategoriaDespesa(
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option value="Materiais">
+                        Materiais
+                      </option>
+                      <option value="Aluguel">
+                        Aluguel
+                      </option>
+                      <option value="Energia">
+                        Energia
+                      </option>
+                      <option value="Internet">
+                        Internet
+                      </option>
+                      <option value="Produtos">
+                        Produtos
+                      </option>
+                      <option value="Marketing">
+                        Marketing
+                      </option>
+                      <option value="Outros">
+                        Outros
+                      </option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Tipo
+                    <select
+                      value={tipoDespesa}
+                      onChange={(event) =>
+                        setTipoDespesa(
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option value="fixa">
+                        Fixa
+                      </option>
+                      <option value="avulsa">
+                        Avulsa
+                      </option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Valor
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={valorDespesa}
+                      onChange={(event) =>
+                        setValorDespesa(
+                          event.target.value
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Data
+                    <input
+                      type="date"
+                      value={dataDespesa}
+                      onChange={(event) =>
+                        setDataDespesa(
+                          event.target.value
+                        )
+                      }
+                    />
+                  </label>
+                </>
+              )}
+
+              <label>
+                Observações
+                <textarea
+                  placeholder="Opcional"
+                  value={observacoes}
+                  onChange={(event) =>
+                    setObservacoes(
+                      event.target.value
+                    )
+                  }
+                  rows={3}
+                />
+              </label>
+
+              {erro && (
+                <div className="agenda-error">
+                  {erro}
+                </div>
+              )}
+
+              <div className="financeiro-modal-actions">
+                <button
+                  type="button"
+                  className="financeiro-cancel"
+                  onClick={fecharModal}
+                  disabled={salvando}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  className="financeiro-save"
+                  disabled={salvando}
+                >
+                  {salvando
+                    ? "Salvando..."
+                    : "Salvar lançamento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
