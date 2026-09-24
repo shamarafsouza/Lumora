@@ -206,10 +206,6 @@ export function Agenda() {
           ascending: true,
         }),
 
-        console.log("USUÁRIO LOGADO:", user.id);
-        console.log("SERVIÇOS RETORNADOS:", servicosResponse.data);
-        console.log("ERRO DOS SERVIÇOS:", servicosResponse.error);
-
       supabase
         .from("agendamentos")
         .select(
@@ -220,6 +216,10 @@ export function Agenda() {
         .neq("status", "cancelado")
         .order("horario"),
     ]);
+
+    console.log("USUÁRIO LOGADO:", user.id);
+    console.log("SERVIÇOS RETORNADOS:", servicosResponse.data);
+    console.log("ERRO DOS SERVIÇOS:", servicosResponse.error);
 
     if (clientesResponse.error) {
       console.error(
