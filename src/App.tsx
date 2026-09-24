@@ -7,6 +7,7 @@ import {
   type Page,
 } from "./components/BottomNav";
 
+import { Dashboard } from "./pages/Dashboard";
 import { Agenda } from "./pages/Agenda";
 import { Financeiro } from "./pages/Financeiro";
 import { Servicos } from "./pages/Servicos";
@@ -18,12 +19,20 @@ import { Login } from "./pages/Login";
 import "./App.css";
 import "./pages/Auth.css";
 
-type Tela = "inicio" | "login" | "cadastro" | "app";
+type Tela =
+  | "inicio"
+  | "login"
+  | "cadastro"
+  | "app";
 
 export default function App() {
   const [tela, setTela] = useState<Tela>("inicio");
-  const [page, setPage] = useState<Page>("agenda");
-  const [carregandoSessao, setCarregandoSessao] = useState(true);
+
+  const [page, setPage] =
+    useState<Page>("inicio");
+
+  const [carregandoSessao, setCarregandoSessao] =
+    useState(true);
 
   useEffect(() => {
     let montado = true;
@@ -37,6 +46,7 @@ export default function App() {
 
       if (session) {
         setTela("app");
+        setPage("inicio");
       }
 
       setCarregandoSessao(false);
@@ -50,8 +60,10 @@ export default function App() {
       (_event, session) => {
         if (session) {
           setTela("app");
+          setPage("inicio");
         } else {
           setTela("inicio");
+          setPage("inicio");
         }
       }
     );
@@ -66,7 +78,9 @@ export default function App() {
     return (
       <div className="app-loading">
         <div className="brand-mark">L</div>
+
         <strong>LUMORA</strong>
+
         <span>Carregando...</span>
       </div>
     );
@@ -85,30 +99,60 @@ export default function App() {
     );
   }
 
-  if (tela === "login" || tela === "cadastro") {
+  if (
+    tela === "login" ||
+    tela === "cadastro"
+  ) {
     return (
       <div className="app">
         <div className="mobile-shell">
           <Login
             modoCadastro={tela === "cadastro"}
-            onVoltar={() => setTela("inicio")}
-            onLogin={() => setTela("app")}
+            onVoltar={() =>
+              setTela("inicio")
+            }
+            onLogin={() => {
+              setTela("app");
+              setPage("inicio");
+            }}
           />
         </div>
       </div>
     );
   }
 
+  function navegar(
+    novaPagina:
+      | "agenda"
+      | "financeiro"
+      | "servicos"
+      | "clientes"
+  ) {
+    setPage(novaPagina);
+  }
+
   return (
     <div className="app">
       <div className="mobile-shell">
+        {page === "inicio" && (
+          <Dashboard
+            onNavigate={navegar}
+          />
+        )}
+
         {page === "agenda" && <Agenda />}
 
-        {page === "financeiro" && <Financeiro />}
+        {page === "financeiro" && (
+          <Financeiro />
+        )}
 
-        {page === "servicos" && <Servicos />}
+        {page === "servicos" && (
+          <Servicos />
+        )}
 
-        {page === "clientes" && <Clientes />}
+        {page === "clientes" && (
+          <Clientes />
+        )}
 
         <BottomNav
           page={page}
