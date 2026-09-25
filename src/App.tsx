@@ -27,7 +27,8 @@ type Tela =
   | "app";
 
 export default function App() {
-  const [tela, setTela] = useState<Tela>("inicio");
+  const [tela, setTela] =
+    useState<Tela>("inicio");
 
   const [page, setPage] =
     useState<Page>("inicio");
@@ -78,7 +79,9 @@ export default function App() {
   if (carregandoSessao) {
     return (
       <div className="app-loading">
-        <div className="brand-mark">L</div>
+        <div className="brand-mark">
+          L
+        </div>
 
         <strong>LUMORA</strong>
 
@@ -92,8 +95,12 @@ export default function App() {
       <div className="app">
         <div className="mobile-shell">
           <Inicio
-            onEntrar={() => setTela("login")}
-            onCriarConta={() => setTela("cadastro")}
+            onEntrar={() =>
+              setTela("login")
+            }
+            onCriarConta={() =>
+              setTela("cadastro")
+            }
           />
         </div>
       </div>
@@ -108,7 +115,9 @@ export default function App() {
       <div className="app">
         <div className="mobile-shell">
           <Login
-            modoCadastro={tela === "cadastro"}
+            modoCadastro={
+              tela === "cadastro"
+            }
             onVoltar={() =>
               setTela("inicio")
             }
@@ -128,6 +137,7 @@ export default function App() {
       | "financeiro"
       | "servicos"
       | "clientes"
+      | "jornada"
   ) {
     setPage(novaPagina);
   }
@@ -135,13 +145,16 @@ export default function App() {
   return (
     <div className="app">
       <div className="mobile-shell">
+
         {page === "inicio" && (
           <Dashboard
             onNavigate={navegar}
           />
         )}
 
-        {page === "agenda" && <Agenda />}
+        {page === "agenda" && (
+          <Agenda />
+        )}
 
         {page === "financeiro" && (
           <Financeiro />
@@ -154,7 +167,7 @@ export default function App() {
         {page === "clientes" && (
           <Clientes />
         )}
-        
+
         {page === "jornada" && (
           <Jornada />
         )}
@@ -163,6 +176,7 @@ export default function App() {
           page={page}
           onChange={setPage}
         />
+
       </div>
     </div>
   );
