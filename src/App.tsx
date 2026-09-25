@@ -11,7 +11,6 @@ import { Dashboard } from "./pages/Dashboard";
 import { Agenda } from "./pages/Agenda";
 import Financeiro from "./pages/Financeiro";
 import { Servicos } from "./pages/Servicos";
-import Jornada from "./pages/Jornada";
 import { Clientes } from "./pages/Clientes";
 
 import { Inicio } from "./pages/Inicio";
@@ -137,7 +136,6 @@ export default function App() {
       | "financeiro"
       | "servicos"
       | "clientes"
-      | "jornada"
   ) {
     setPage(novaPagina);
   }
@@ -166,10 +164,6 @@ export default function App() {
 
         {page === "clientes" && (
           <Clientes />
-        )}
-
-        {page === "jornada" && (
-          <Jornada />
         )}
 
         <BottomNav
