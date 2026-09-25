@@ -6,6 +6,7 @@ import {
   LoaderCircle,
   Pencil,
   Trash2,
+  Package,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -20,6 +21,14 @@ type Servico = {
   created_at: string;
 };
 
+type Produto = {
+  id: string;
+  nome: string;
+  quantidade_embalagem: number;
+  unidade: "g" | "ml" | "un";
+  preco_compra: number;
+};
+
 const categoriasPadrao = [
   "Manicure",
   "Pedicure",
@@ -32,6 +41,9 @@ const categoriasPadrao = [
 
 export function Servicos() {
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
+
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
@@ -44,11 +56,9 @@ export function Servicos() {
   const [preco, setPreco] = useState("");
 
   const [salvando, setSalvando] = useState(false);
-  const [excluindo, setExcluindo] = useState<string | null>(
-    null
-  );
+  const [excluindo, setExcluindo] = useState<string | null>(null);
 
-  async function carregarServicos() {
+  async function carregarDados() {
     setCarregando(true);
     setErro("");
 
@@ -57,47 +67,65 @@ export function Servicos() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Não foi possível identificar sua conta."
-      );
+      setErro("Não foi possível identificar sua conta.");
       setCarregando(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("servicos")
-      .select(
-        "id, profissional_id, nome, categoria, duracao, preco, created_at"
-      )
-      .eq("profissional_id", user.id)
-      .order("categoria", {
-        ascending: true,
-      })
-      .order("nome", {
-        ascending: true,
-      });
+    const [servicosResponse, produtosResponse] = await Promise.all([
+      supabase
+        .from("servicos")
+        .select(
+          "id, profissional_id, nome, categoria, duracao, preco, created_at"
+        )
+        .eq("profissional_id", user.id)
+        .order("categoria", { ascending: true })
+        .order("nome", { ascending: true }),
 
-    if (error) {
-      console.error(
-        "ERRO AO CARREGAR SERVIÇOS:",
-        error
-      );
+      supabase
+        .from("produtos")
+        .select(
+          "id, nome, quantidade_embalagem, unidade, preco_compra"
+        )
+        .eq("profissional_id", user.id)
+        .order("nome", { ascending: true }),
+    ]);
 
+    if (servicosResponse.error) {
+      console.error("ERRO AO CARREGAR SERVIÇOS:", servicosResponse.error);
       setErro(
-        error.message ||
+        servicosResponse.error.message ||
           "Não foi possível carregar seus serviços."
       );
-
       setCarregando(false);
       return;
     }
 
-    setServicos(data ?? []);
+    if (produtosResponse.error) {
+      console.error("ERRO AO CARREGAR PRODUTOS:", produtosResponse.error);
+      setErro(
+        produtosResponse.error.message ||
+          "Não foi possível carregar seus produtos."
+      );
+      setCarregando(false);
+      return;
+    }
+
+    setServicos(servicosResponse.data ?? []);
+
+    setProdutos(
+      (produtosResponse.data ?? []).map((produto) => ({
+        ...produto,
+        quantidade_embalagem: Number(produto.quantidade_embalagem),
+        preco_compra: Number(produto.preco_compra),
+      }))
+    );
+
     setCarregando(false);
   }
 
   useEffect(() => {
-    carregarServicos();
+    carregarDados();
   }, []);
 
   function limparFormulario() {
@@ -105,29 +133,49 @@ export function Servicos() {
     setCategoria("");
     setDuracao("");
     setPreco("");
+    setProdutosSelecionados([]);
     setEditando(null);
     setErro("");
   }
 
-  function abrirAdicionar() {
+  async function abrirAdicionar() {
     limparFormulario();
+
+    if (produtos.length === 0) {
+      setErro("");
+    }
+
     setModalAberto(true);
   }
 
-  function abrirEditar(servico: Servico) {
+  async function abrirEditar(servico: Servico) {
     setEditando(servico);
-
     setNome(servico.nome);
     setCategoria(servico.categoria);
     setDuracao(String(servico.duracao));
-
     setPreco(
-      Number(servico.preco)
-        .toFixed(2)
-        .replace(".", ",")
+      Number(servico.preco).toFixed(2).replace(".", ",")
     );
-
     setErro("");
+
+    const { data, error } = await supabase
+      .from("servico_produtos")
+      .select("produto_id")
+      .eq("servico_id", servico.id);
+
+    if (error) {
+      console.error("ERRO AO CARREGAR PRODUTOS DO SERVIÇO:", error);
+      setErro(
+        error.message ||
+          "Não foi possível carregar os produtos deste serviço."
+      );
+      setProdutosSelecionados([]);
+    } else {
+      setProdutosSelecionados(
+        (data ?? []).map((item) => item.produto_id)
+      );
+    }
+
     setModalAberto(true);
   }
 
@@ -145,27 +193,60 @@ export function Servicos() {
 
     const numero = Number(limpo);
 
-    return Number.isFinite(numero)
-      ? numero
-      : 0;
+    return Number.isFinite(numero) ? numero : 0;
   }
 
   function formatarPrecoInput(valor: string) {
-    const somenteNumeros = valor.replace(
-      /\D/g,
-      ""
-    );
+    const somenteNumeros = valor.replace(/\D/g, "");
 
     if (!somenteNumeros) {
       return "";
     }
 
-    const numero =
-      Number(somenteNumeros) / 100;
+    const numero = Number(somenteNumeros) / 100;
 
-    return numero
-      .toFixed(2)
-      .replace(".", ",");
+    return numero.toFixed(2).replace(".", ",");
+  }
+
+  function alternarProduto(produtoId: string) {
+    setProdutosSelecionados((atual) =>
+      atual.includes(produtoId)
+        ? atual.filter((id) => id !== produtoId)
+        : [...atual, produtoId]
+    );
+  }
+
+  async function salvarProdutosDoServico(
+    servicoId: string,
+    profissionalId: string
+  ) {
+    const { error: deleteError } = await supabase
+      .from("servico_produtos")
+      .delete()
+      .eq("servico_id", servicoId)
+      .eq("profissional_id", profissionalId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    if (produtosSelecionados.length === 0) {
+      return;
+    }
+
+    const registros = produtosSelecionados.map((produtoId) => ({
+      profissional_id: profissionalId,
+      servico_id: servicoId,
+      produto_id: produtoId,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("servico_produtos")
+      .insert(registros);
+
+    if (insertError) {
+      throw insertError;
+    }
   }
 
   async function salvarServico(
@@ -195,9 +276,7 @@ export function Servicos() {
       !Number.isFinite(duracaoNumero) ||
       duracaoNumero <= 0
     ) {
-      setErro(
-        "Informe uma duração válida em minutos."
-      );
+      setErro("Informe uma duração válida em minutos.");
       return;
     }
 
@@ -216,124 +295,97 @@ export function Servicos() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Sua sessão expirou. Faça login novamente."
-      );
+      setErro("Sua sessão expirou. Faça login novamente.");
       setSalvando(false);
       return;
     }
 
-    if (editando) {
-      const { data, error } = await supabase
-        .from("servicos")
-        .update({
-          nome: nomeLimpo,
-          categoria: categoriaLimpa,
-          duracao: duracaoNumero,
-          preco: precoNumero,
-        })
-        .eq("id", editando.id)
-        .eq("profissional_id", user.id)
-        .select()
-        .single();
+    try {
+      if (editando) {
+        const { data, error } = await supabase
+          .from("servicos")
+          .update({
+            nome: nomeLimpo,
+            categoria: categoriaLimpa,
+            duracao: duracaoNumero,
+            preco: precoNumero,
+          })
+          .eq("id", editando.id)
+          .eq("profissional_id", user.id)
+          .select()
+          .single();
 
-      if (error) {
-        console.error(
-          "ERRO AO EDITAR SERVIÇO:",
-          error
+        if (error) {
+          throw error;
+        }
+
+        await salvarProdutosDoServico(data.id, user.id);
+
+        setServicos((atual) =>
+          atual
+            .map((servico) =>
+              servico.id === data.id ? data : servico
+            )
+            .sort((a, b) => {
+              const categoriaCompare =
+                a.categoria.localeCompare(b.categoria);
+
+              if (categoriaCompare !== 0) {
+                return categoriaCompare;
+              }
+
+              return a.nome.localeCompare(b.nome);
+            })
         );
+      } else {
+        const { data, error } = await supabase
+          .from("servicos")
+          .insert({
+            profissional_id: user.id,
+            nome: nomeLimpo,
+            categoria: categoriaLimpa,
+            duracao: duracaoNumero,
+            preco: precoNumero,
+          })
+          .select()
+          .single();
 
-        setErro(
-          error.message ||
-            "Não foi possível atualizar o serviço."
-        );
+        if (error) {
+          throw error;
+        }
 
-        setSalvando(false);
-        return;
-      }
+        await salvarProdutosDoServico(data.id, user.id);
 
-      setServicos((atual) =>
-        atual
-          .map((servico) =>
-            servico.id === data.id
-              ? data
-              : servico
-          )
-          .sort((a, b) => {
+        setServicos((atual) =>
+          [...atual, data].sort((a, b) => {
             const categoriaCompare =
-              a.categoria.localeCompare(
-                b.categoria
-              );
+              a.categoria.localeCompare(b.categoria);
 
             if (categoriaCompare !== 0) {
               return categoriaCompare;
             }
 
-            return a.nome.localeCompare(
-              b.nome
-            );
+            return a.nome.localeCompare(b.nome);
           })
-      );
+        );
+      }
 
       setSalvando(false);
       setModalAberto(false);
       limparFormulario();
-
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("servicos")
-      .insert({
-        profissional_id: user.id,
-        nome: nomeLimpo,
-        categoria: categoriaLimpa,
-        duracao: duracaoNumero,
-        preco: precoNumero,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error(
-        "ERRO AO CADASTRAR SERVIÇO:",
-        error
-      );
+    } catch (error: any) {
+      console.error("ERRO AO SALVAR SERVIÇO:", error);
 
       setErro(
-        error.message ||
-          "Não foi possível cadastrar o serviço."
+        error?.message ||
+          "Não foi possível salvar o serviço."
       );
 
       setSalvando(false);
-      return;
     }
-
-    setServicos((atual) =>
-      [...atual, data].sort((a, b) => {
-        const categoriaCompare =
-          a.categoria.localeCompare(
-            b.categoria
-          );
-
-        if (categoriaCompare !== 0) {
-          return categoriaCompare;
-        }
-
-        return a.nome.localeCompare(
-          b.nome
-        );
-      })
-    );
-
-    setSalvando(false);
-    setModalAberto(false);
-    limparFormulario();
   }
 
-  async function excluirServico(
-    servico: Servico
-  ) {
+  async function excluirServico(servico: Servico) {
     const confirmou = window.confirm(
       `Deseja realmente excluir o serviço "${servico.nome}"?`
     );
@@ -350,9 +402,7 @@ export function Servicos() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Sua sessão expirou. Faça login novamente."
-      );
+      setErro("Sua sessão expirou. Faça login novamente.");
       setExcluindo(null);
       return;
     }
@@ -364,10 +414,7 @@ export function Servicos() {
       .eq("profissional_id", user.id);
 
     if (error) {
-      console.error(
-        "ERRO AO EXCLUIR SERVIÇO:",
-        error
-      );
+      console.error("ERRO AO EXCLUIR SERVIÇO:", error);
 
       setErro(
         error.message ||
@@ -379,36 +426,33 @@ export function Servicos() {
     }
 
     setServicos((atual) =>
-      atual.filter(
-        (item) => item.id !== servico.id
-      )
+      atual.filter((item) => item.id !== servico.id)
     );
 
     setExcluindo(null);
   }
 
-  const grupos = servicos.reduce<
-    Record<string, Servico[]>
-  >((acc, servico) => {
-    const chave =
-      servico.categoria?.trim() ||
-      "Outros";
+  const grupos = servicos.reduce<Record<string, Servico[]>>(
+    (acc, servico) => {
+      const chave =
+        servico.categoria?.trim() || "Outros";
 
-    if (!acc[chave]) {
-      acc[chave] = [];
-    }
+      if (!acc[chave]) {
+        acc[chave] = [];
+      }
 
-    acc[chave].push(servico);
+      acc[chave].push(servico);
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {}
+  );
 
   return (
     <main className="page">
       <header className="top">
         <div>
           <h1>Lumora</h1>
-
           <p>Catálogo de Serviços</p>
         </div>
 
@@ -420,9 +464,7 @@ export function Servicos() {
 
         <b>
           {servicos.length}{" "}
-          {servicos.length === 1
-            ? "serviço"
-            : "serviços"}
+          {servicos.length === 1 ? "serviço" : "serviços"}
         </b>
       </div>
 
@@ -447,10 +489,7 @@ export function Servicos() {
             size={22}
             className="spin"
           />
-
-          <span>
-            Carregando serviços...
-          </span>
+          <span>Carregando serviços...</span>
         </div>
       ) : servicos.length === 0 ? (
         <div className="clients-empty">
@@ -458,14 +497,11 @@ export function Servicos() {
             <Plus size={22} />
           </div>
 
-          <h3>
-            Nenhum serviço cadastrado
-          </h3>
+          <h3>Nenhum serviço cadastrado</h3>
 
           <p>
-            Cadastre seus serviços para
-            começar a organizar seus
-            atendimentos.
+            Cadastre seus serviços para começar a
+            organizar seus atendimentos.
           </p>
 
           <button
@@ -492,13 +528,10 @@ export function Servicos() {
                   >
                     <div className="service-main">
                       <div>
-                        <strong>
-                          {servico.nome}
-                        </strong>
+                        <strong>{servico.nome}</strong>
 
                         <span>
                           <Clock3 size={16} />
-
                           {servico.duracao} min
                         </span>
                       </div>
@@ -506,15 +539,10 @@ export function Servicos() {
                       <b>
                         {Number(
                           servico.preco
-                        ).toLocaleString(
-                          "pt-BR",
-                          {
-                            style:
-                              "currency",
-                            currency:
-                              "BRL",
-                          }
-                        )}
+                        ).toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
                       </b>
                     </div>
 
@@ -522,9 +550,7 @@ export function Servicos() {
                       <button
                         type="button"
                         onClick={() =>
-                          abrirEditar(
-                            servico
-                          )
+                          abrirEditar(servico)
                         }
                         aria-label={`Editar ${servico.nome}`}
                       >
@@ -534,26 +560,20 @@ export function Servicos() {
                       <button
                         type="button"
                         onClick={() =>
-                          excluirServico(
-                            servico
-                          )
+                          excluirServico(servico)
                         }
                         disabled={
-                          excluindo ===
-                          servico.id
+                          excluindo === servico.id
                         }
                         aria-label={`Excluir ${servico.nome}`}
                       >
-                        {excluindo ===
-                        servico.id ? (
+                        {excluindo === servico.id ? (
                           <LoaderCircle
                             size={16}
                             className="spin"
                           />
                         ) : (
-                          <Trash2
-                            size={16}
-                          />
+                          <Trash2 size={16} />
                         )}
                       </button>
                     </div>
@@ -599,9 +619,7 @@ export function Servicos() {
                 : "Cadastre um novo serviço no seu catálogo."}
             </p>
 
-            <form
-              onSubmit={salvarServico}
-            >
+            <form onSubmit={salvarServico}>
               <label>
                 Nome
 
@@ -610,9 +628,7 @@ export function Servicos() {
                   placeholder="Ex.: Alongamento em gel"
                   value={nome}
                   onChange={(event) =>
-                    setNome(
-                      event.target.value
-                    )
+                    setNome(event.target.value)
                   }
                   autoFocus
                 />
@@ -627,21 +643,17 @@ export function Servicos() {
                   placeholder="Ex.: Alongamento"
                   value={categoria}
                   onChange={(event) =>
-                    setCategoria(
-                      event.target.value
-                    )
+                    setCategoria(event.target.value)
                   }
                 />
 
                 <datalist id="categorias-servicos">
-                  {categoriasPadrao.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      />
-                    )
-                  )}
+                  {categoriasPadrao.map((item) => (
+                    <option
+                      key={item}
+                      value={item}
+                    />
+                  ))}
                 </datalist>
               </label>
 
@@ -656,12 +668,9 @@ export function Servicos() {
                     placeholder="Ex.: 60"
                     value={duracao}
                     onChange={(event) =>
-                      setDuracao(
-                        event.target.value
-                      )
+                      setDuracao(event.target.value)
                     }
                   />
-
                   <span>min</span>
                 </div>
               </label>
@@ -688,6 +697,87 @@ export function Servicos() {
                 </div>
               </label>
 
+              <div className="service-products-section">
+                <div className="service-products-title">
+                  <div>
+                    <strong>
+                      Produtos gastos neste serviço
+                    </strong>
+                    <span>
+                      Selecione os produtos que você
+                      normalmente utiliza.
+                    </span>
+                  </div>
+
+                  <Package size={20} />
+                </div>
+
+                {produtos.length === 0 ? (
+                  <div className="service-products-empty">
+                    <Package size={20} />
+                    <span>
+                      Você ainda não cadastrou produtos.
+                      Cadastre-os em Financeiro →
+                      Produtos e custos.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="service-products-list">
+                    {produtos.map((produto) => {
+                      const selecionado =
+                        produtosSelecionados.includes(
+                          produto.id
+                        );
+
+                      return (
+                        <label
+                          key={produto.id}
+                          className={`service-product-option ${
+                            selecionado
+                              ? "selected"
+                              : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selecionado}
+                            onChange={() =>
+                              alternarProduto(
+                                produto.id
+                              )
+                            }
+                          />
+
+                          <span className="service-product-check">
+                            {selecionado ? "✓" : ""}
+                          </span>
+
+                          <span className="service-product-info">
+                            <strong>
+                              {produto.nome}
+                            </strong>
+
+                            <small>
+                              {produto.quantidade_embalagem}{" "}
+                              {produto.unidade} ·{" "}
+                              {Number(
+                                produto.preco_compra
+                              ).toLocaleString(
+                                "pt-BR",
+                                {
+                                  style: "currency",
+                                  currency: "BRL",
+                                }
+                              )}
+                            </small>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {erro && (
                 <div className="client-error">
                   {erro}
@@ -698,9 +788,7 @@ export function Servicos() {
                 <button
                   type="button"
                   className="client-cancel"
-                  onClick={
-                    fecharModal
-                  }
+                  onClick={fecharModal}
                   disabled={salvando}
                 >
                   Cancelar
@@ -717,7 +805,6 @@ export function Servicos() {
                         size={17}
                         className="spin"
                       />
-
                       Salvando...
                     </>
                   ) : editando ? (
