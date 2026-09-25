@@ -1617,3 +1617,268 @@ body {
   color: #8f2349;
   font-size: 12px;
 }
+
+/* =========================
+   PRODUTOS - FINANCEIRO
+   ========================= */
+
+.produtos-box {
+  margin-top: 25px;
+}
+
+.produtos-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.produtos-header h2 {
+  margin: 0;
+  font: 700 18px 'Playfair Display', serif;
+  color: var(--wine-dark);
+}
+
+.produtos-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.produtos-add {
+  flex: none;
+  height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--wine);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.produtos-add:hover {
+  background: var(--wine-dark);
+}
+
+.produtos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.produto-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 13px;
+  box-shadow: 0 3px 12px #6b30400b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.produto-info {
+  min-width: 0;
+}
+
+.produto-info strong {
+  display: block;
+  color: #4b3040;
+  font: 600 14px 'Playfair Display', serif;
+}
+
+.produto-info span {
+  display: block;
+  margin-top: 4px;
+  color: #765e69;
+  font-size: 10px;
+}
+
+.produto-custo {
+  flex: none;
+  text-align: right;
+}
+
+.produto-custo strong {
+  display: block;
+  color: var(--wine);
+  font-size: 13px;
+}
+
+.produto-custo span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.produtos-vazio {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+  box-shadow: 0 3px 12px #6b30400b;
+}
+
+/* MODAL DE PRODUTO */
+
+.produto-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: #21151d66;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.produto-modal {
+  width: min(430px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 25px 25px 0 0;
+  padding: 14px 22px 25px;
+  box-shadow: 0 -10px 40px #21151d26;
+}
+
+.produto-modal-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 5px;
+  background: #e5d9dd;
+  margin: 0 auto 20px;
+}
+
+.produto-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.produto-modal-header h2 {
+  margin: 0;
+  font: 700 20px 'Playfair Display', serif;
+  color: var(--wine-dark);
+}
+
+.produto-modal-header p {
+  margin: 5px 0 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.produto-modal-close {
+  border: 0;
+  background: transparent;
+  color: #8d7580;
+  cursor: pointer;
+}
+
+.produto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.produto-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #765e69;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.produto-form input,
+.produto-form select {
+  width: 100%;
+  height: 43px;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbf5f1;
+  color: #4b3040;
+  padding: 11px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.produto-form input:focus,
+.produto-form select:focus {
+  border-color: var(--wine);
+}
+
+.produto-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 9px;
+}
+
+.produto-custo-calculado {
+  background: #fbf2ef;
+  border: 1px solid #ead7d2;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.produto-custo-calculado span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.produto-custo-calculado strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--wine-dark);
+  font-size: 16px;
+}
+
+.produto-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.produto-modal-actions button {
+  height: 43px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.produto-cancelar {
+  border: 1px solid var(--wine);
+  background: #fff;
+  color: var(--wine);
+}
+
+.produto-salvar {
+  border: 0;
+  background: var(--wine);
+  color: #fff;
+}
+
+.produto-modal-actions button:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
