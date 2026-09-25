@@ -25,6 +25,14 @@ type Servico = {
   preco: number;
 };
 
+type Produto = {
+  id: string;
+  nome: string;
+  quantidade_embalagem: number;
+  unidade: "g" | "ml" | "un";
+  preco_compra: number;
+};
+
 type Agendamento = {
   id: string;
   profissional_id: string;
@@ -106,6 +114,8 @@ export function Agenda() {
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [servicoProdutos, setServicoProdutos] = useState<Record<string, string[]>>({});
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
 
   const [carregando, setCarregando] = useState(true);
@@ -200,6 +210,8 @@ export function Agenda() {
     const [
       clientesResponse,
       servicosResponse,
+      produtosResponse,
+      vinculosResponse,
       agendaResponse,
     ] = await Promise.all([
       supabase
@@ -218,6 +230,17 @@ export function Agenda() {
         .order("nome", {
           ascending: true,
         }),
+
+      supabase
+        .from("produtos")
+        .select("id, nome, quantidade_embalagem, unidade, preco_compra")
+        .eq("profissional_id", user.id)
+        .order("nome"),
+
+      supabase
+        .from("servico_produtos")
+        .select("servico_id, produto_id")
+        .eq("profissional_id", user.id),
 
       supabase
         .from("agendamentos")
@@ -252,6 +275,28 @@ export function Agenda() {
       return;
     }
 
+    if (produtosResponse.error) {
+      console.error(
+        "Erro ao carregar produtos:",
+        produtosResponse.error
+      );
+
+      setErro("Não foi possível carregar os produtos usados nos serviços.");
+      setCarregando(false);
+      return;
+    }
+
+    if (vinculosResponse.error) {
+      console.error(
+        "Erro ao carregar produtos dos serviços:",
+        vinculosResponse.error
+      );
+
+      setErro("Não foi possível carregar os produtos dos serviços.");
+      setCarregando(false);
+      return;
+    }
+
     if (agendaResponse.error) {
       console.error(
         "Erro ao carregar agendamentos:",
@@ -273,6 +318,25 @@ export function Agenda() {
       }))
     );
 
+    setProdutos(
+      (produtosResponse.data ?? []).map((produto) => ({
+        ...produto,
+        quantidade_embalagem: Number(produto.quantidade_embalagem),
+        preco_compra: Number(produto.preco_compra),
+      }))
+    );
+
+    const mapaProdutos: Record<string, string[]> = {};
+
+    (vinculosResponse.data ?? []).forEach((vinculo) => {
+      if (!mapaProdutos[vinculo.servico_id]) {
+        mapaProdutos[vinculo.servico_id] = [];
+      }
+
+      mapaProdutos[vinculo.servico_id].push(vinculo.produto_id);
+    });
+
+    setServicoProdutos(mapaProdutos);
     setAgendamentos(agendaResponse.data ?? []);
 
     setCarregando(false);
@@ -520,6 +584,31 @@ export function Agenda() {
      CONCLUIR ATENDIMENTO
      ========================= */
 
+  function calcularCustoMaterial(servicoId: string) {
+    const produtoIds = servicoProdutos[servicoId] ?? [];
+
+    return produtoIds.reduce((total, produtoId) => {
+      const produto = produtos.find((item) => item.id === produtoId);
+
+      if (!produto || produto.quantidade_embalagem <= 0 || produto.preco_compra <= 0) {
+        return total;
+      }
+
+      // Estimativa automática do Lumora:
+      // produtos medidos em g/ml usam 5% da embalagem por atendimento;
+      // produtos em unidade usam 1 unidade.
+      const quantidadeEstimada =
+        produto.unidade === "un"
+          ? 1
+          : Math.min(produto.quantidade_embalagem, produto.quantidade_embalagem * 0.05);
+
+      const custoUnitario =
+        produto.preco_compra / produto.quantidade_embalagem;
+
+      return total + custoUnitario * quantidadeEstimada;
+    }, 0);
+  }
+
   async function concluirAtendimento(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -594,7 +683,9 @@ export function Agenda() {
         agendamento_id: selecionado.id,
         valor_recebido: valor,
         forma_pagamento: formaPagamento,
-        custo_material: 0,
+        custo_material: Number(
+          calcularCustoMaterial(selecionado.servico_id).toFixed(2)
+        ),
         observacoes:
           observacoesFinanceiro.trim() || null,
       });
