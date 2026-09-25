@@ -5,6 +5,8 @@ import {
   Plus,
   Wallet,
   X,
+  Package,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -50,6 +52,14 @@ type Despesa = {
 
 type TipoLancamento = "receita" | "despesa";
 
+type Produto = {
+  id: string;
+  nome: string;
+  quantidade_embalagem: number;
+  unidade: string;
+  preco_compra: number;
+};
+
 const formatarMoeda = (valor: number) =>
   valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -62,6 +72,13 @@ const Financeiro = () => {
   >([]);
 
   const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtosAberto, setProdutosAberto] = useState(false);
+  const [produtoNome, setProdutoNome] = useState("");
+  const [produtoQuantidade, setProdutoQuantidade] = useState("");
+  const [produtoUnidade, setProdutoUnidade] = useState("g");
+  const [produtoPreco, setProdutoPreco] = useState("");
+  const [salvandoProduto, setSalvandoProduto] = useState(false);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -113,6 +130,7 @@ const Financeiro = () => {
       clientesResponse,
       servicosResponse,
       agendamentosResponse,
+      produtosResponse,
     ] = await Promise.all([
       supabase
         .from("financeiro_atendimentos")
@@ -150,6 +168,12 @@ const Financeiro = () => {
         .eq("profissional_id", user.id)
         .order("data", { ascending: false })
         .order("horario", { ascending: false }),
+
+      supabase
+        .from("produtos")
+        .select("id, nome, quantidade_embalagem, unidade, preco_compra")
+        .eq("profissional_id", user.id)
+        .order("nome"),
     ]);
 
     if (financeiroResponse.error) {
@@ -186,6 +210,14 @@ const Financeiro = () => {
     );
 
     setAgendamentos(agendamentosResponse.data || []);
+
+    setProdutos(
+      (produtosResponse.data || []).map((item) => ({
+        ...item,
+        quantidade_embalagem: Number(item.quantidade_embalagem),
+        preco_compra: Number(item.preco_compra),
+      }))
+    );
 
     setCarregando(false);
   }
@@ -251,6 +283,102 @@ const Financeiro = () => {
   function fecharModal() {
     if (salvando) return;
     setModalAberto(false);
+  }
+
+  function abrirProdutos() {
+    setErro("");
+    setProdutoNome("");
+    setProdutoQuantidade("");
+    setProdutoUnidade("g");
+    setProdutoPreco("");
+    setProdutosAberto(true);
+  }
+
+  function fecharProdutos() {
+    if (salvandoProduto) return;
+    setProdutosAberto(false);
+  }
+
+  async function cadastrarProduto(event: React.FormEvent) {
+    event.preventDefault();
+    setErro("");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente.");
+      return;
+    }
+
+    const quantidade = Number(produtoQuantidade.replace(",", "."));
+    const preco = Number(produtoPreco.replace(",", "."));
+
+    if (!produtoNome.trim()) {
+      setErro("Informe o nome do produto.");
+      return;
+    }
+    if (!quantidade || quantidade <= 0) {
+      setErro("Informe a quantidade da embalagem.");
+      return;
+    }
+    if (!preco || preco <= 0) {
+      setErro("Informe o preço pago pelo produto.");
+      return;
+    }
+
+    setSalvandoProduto(true);
+
+    const { data, error } = await supabase
+      .from("produtos")
+      .insert({
+        profissional_id: user.id,
+        nome: produtoNome.trim(),
+        quantidade_embalagem: quantidade,
+        unidade: produtoUnidade,
+        preco_compra: preco,
+      })
+      .select("id, nome, quantidade_embalagem, unidade, preco_compra")
+      .single();
+
+    if (error) {
+      console.error(error);
+      setErro(error.message || "Não foi possível cadastrar o produto.");
+      setSalvandoProduto(false);
+      return;
+    }
+
+    setProdutos((atual) =>
+      [...atual, { ...data, quantidade_embalagem: Number(data.quantidade_embalagem), preco_compra: Number(data.preco_compra) }]
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+    );
+    setSalvandoProduto(false);
+    setProdutoNome("");
+    setProdutoQuantidade("");
+    setProdutoPreco("");
+  }
+
+  async function excluirProduto(produto: Produto) {
+    if (!window.confirm(`Excluir o produto "${produto.nome}"?`)) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("produtos")
+      .delete()
+      .eq("id", produto.id)
+      .eq("profissional_id", user.id);
+
+    if (error) {
+      console.error(error);
+      setErro(error.message || "Não foi possível excluir o produto.");
+      return;
+    }
+
+    setProdutos((atual) => atual.filter((item) => item.id !== produto.id));
+  }
+
+  function custoUnitario(produto: Produto) {
+    return produto.preco_compra / produto.quantidade_embalagem;
   }
 
   async function salvarLancamento(
@@ -420,22 +548,63 @@ const Financeiro = () => {
       </section>
 
       <div className="financeiro-botoes">
-        <button
-          type="button"
-          onClick={() => abrirModal("receita")}
-        >
+        <button type="button" onClick={() => abrirModal("receita")}>
           <ArrowUp size={17} />
           Adicionar receita
         </button>
 
-        <button
-          type="button"
-          onClick={() => abrirModal("despesa")}
-        >
+        <button type="button" onClick={() => abrirModal("despesa")}>
           <ArrowDown size={17} />
           Adicionar despesa
         </button>
+
+        <button type="button" onClick={abrirProdutos}>
+          <Package size={17} />
+          Produtos e custos
+        </button>
       </div>
+
+      {produtosAberto && (
+        <div className="financeiro-produtos-panel">
+          <div className="financeiro-section-header">
+            <div>
+              <span className="financeiro-eyebrow">CUSTOS</span>
+              <h2>Produtos utilizados</h2>
+              <p>Cadastre seus produtos uma vez. O Lumora calcula automaticamente o custo por g, ml ou unidade.</p>
+            </div>
+            <button type="button" className="financeiro-modal-close" onClick={fecharProdutos}>
+              <X size={19} />
+            </button>
+          </div>
+
+          <form className="financeiro-form produto-form" onSubmit={cadastrarProduto}>
+            <label>Nome do produto<input value={produtoNome} onChange={(e) => setProdutoNome(e.target.value)} placeholder="Ex.: Gel construtor" /></label>
+            <div className="produto-grid">
+              <label>Quantidade da embalagem<input type="text" inputMode="decimal" value={produtoQuantidade} onChange={(e) => setProdutoQuantidade(e.target.value)} placeholder="30" /></label>
+              <label>Unidade<select value={produtoUnidade} onChange={(e) => setProdutoUnidade(e.target.value)}><option value="g">g</option><option value="ml">ml</option><option value="un">unidade</option></select></label>
+            </div>
+            <label>Preço pago<input type="text" inputMode="decimal" value={produtoPreco} onChange={(e) => setProdutoPreco(e.target.value)} placeholder="80,00" /></label>
+            {produtoQuantidade && produtoPreco && Number(produtoQuantidade.replace(",", ".")) > 0 && (
+              <div className="produto-custo-preview">
+                Custo: <strong>{formatarMoeda(Number(produtoPreco.replace(",", ".")) / Number(produtoQuantidade.replace(",", ".")))}</strong> / {produtoUnidade}
+              </div>
+            )}
+            {erro && produtosAberto && <div className="agenda-error">{erro}</div>}
+            <button type="submit" className="financeiro-save" disabled={salvandoProduto}>{salvandoProduto ? "Cadastrando..." : "Cadastrar produto"}</button>
+          </form>
+
+          <div className="produtos-lista">
+            {produtos.length === 0 ? (
+              <div className="financeiro-vazio"><Package size={30} /><strong>Nenhum produto cadastrado</strong><span>Cadastre gel, primer, top coat, lixas e outros materiais usados nos serviços.</span></div>
+            ) : produtos.map((produto) => (
+              <article className="produto-item" key={produto.id}>
+                <div><strong>{produto.nome}</strong><span>{produto.quantidade_embalagem} {produto.unidade} · {formatarMoeda(produto.preco_compra)}</span><small>{formatarMoeda(custoUnitario(produto))} / {produto.unidade}</small></div>
+                <button type="button" onClick={() => excluirProduto(produto)} aria-label={`Excluir ${produto.nome}`}><Trash2 size={17} /></button>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
 
       {erro && !modalAberto && (
         <div className="agenda-error">{erro}</div>
