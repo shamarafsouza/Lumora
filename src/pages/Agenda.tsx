@@ -5,6 +5,7 @@ import {
   X,
   LoaderCircle,
   Check,
+  Settings,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -123,6 +124,9 @@ export function Agenda() {
 
   const [selecionado, setSelecionado] =
     useState<Agendamento | null>(null);
+
+  const [jornadaAberta, setJornadaAberta] =
+    useState(false);
 
   /* =========================
      CONCLUSÃO DO ATENDIMENTO
@@ -693,6 +697,15 @@ export function Agenda() {
         </div>
 
         <div className="agenda-header-actions">
+          <button
+            type="button"
+            className="agenda-settings"
+            onClick={() => setJornadaAberta(true)}
+            aria-label="Configurar jornada"
+          >
+            <Settings size={19} />
+          </button>
+
           <button
             type="button"
             className="agenda-add"
@@ -1366,6 +1379,26 @@ export function Agenda() {
             </section>
           </div>
         )}
+
+      {/* =========================
+          CONFIGURAÇÃO DA JORNADA
+          ========================= */}
+
+      {jornadaAberta && (
+        <div
+          className="jornada-modal-backdrop"
+          onClick={() => setJornadaAberta(false)}
+        >
+          <section
+            className="jornada-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Jornada
+              onClose={() => setJornadaAberta(false)}
+            />
+          </section>
+        </div>
+      )}
     </main>
   );
 }
