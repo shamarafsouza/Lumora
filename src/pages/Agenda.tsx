@@ -4,6 +4,7 @@ import {
   Plus,
   X,
   LoaderCircle,
+  Check,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -99,13 +100,11 @@ export function Agenda() {
     return data;
   }, []);
 
-  const [dataSelecionada, setDataSelecionada] =
-    useState(hoje);
+  const [dataSelecionada, setDataSelecionada] = useState(hoje);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [agendamentos, setAgendamentos] =
-    useState<Agendamento[]>([]);
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -124,6 +123,19 @@ export function Agenda() {
   const [selecionado, setSelecionado] =
     useState<Agendamento | null>(null);
 
+  /* =========================
+     CONCLUSÃO DO ATENDIMENTO
+     ========================= */
+
+  const [conclusaoAberta, setConclusaoAberta] = useState(false);
+  const [valorRecebido, setValorRecebido] = useState("");
+  const [formaPagamento, setFormaPagamento] = useState("pix");
+  const [custoMaterial, setCustoMaterial] = useState("");
+  const [observacoesFinanceiro, setObservacoesFinanceiro] =
+    useState("");
+  const [salvandoConclusao, setSalvandoConclusao] =
+    useState(false);
+
   const semanaAtual = useMemo(
     () => inicioDaSemana(dataSelecionada),
     [dataSelecionada]
@@ -133,9 +145,7 @@ export function Agenda() {
     return Array.from({ length: 7 }, (_, index) => {
       const data = new Date(semanaAtual);
 
-      data.setDate(
-        semanaAtual.getDate() + index
-      );
+      data.setDate(semanaAtual.getDate() + index);
 
       return {
         data,
@@ -163,6 +173,10 @@ export function Agenda() {
     "18:00",
   ];
 
+  /* =========================
+     CARREGAR DADOS
+     ========================= */
+
   async function carregarDados() {
     setCarregando(true);
     setErro("");
@@ -172,15 +186,12 @@ export function Agenda() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Sua sessão expirou. Faça login novamente."
-      );
+      setErro("Sua sessão expirou. Faça login novamente.");
       setCarregando(false);
       return;
     }
 
-    const dataBanco =
-      formatarDataBanco(dataSelecionada);
+    const dataBanco = formatarDataBanco(dataSelecionada);
 
     const [
       clientesResponse,
@@ -195,9 +206,7 @@ export function Agenda() {
 
       supabase
         .from("servicos")
-        .select(
-          "id, nome, categoria, duracao, preco"
-        )
+        .select("id, nome, categoria, duracao, preco")
         .eq("profissional_id", user.id)
         .order("categoria", {
           ascending: true,
@@ -217,20 +226,13 @@ export function Agenda() {
         .order("horario"),
     ]);
 
-    console.log("USUÁRIO LOGADO:", user.id);
-    console.log("SERVIÇOS RETORNADOS:", servicosResponse.data);
-    console.log("ERRO DOS SERVIÇOS:", servicosResponse.error);
-
     if (clientesResponse.error) {
       console.error(
         "Erro ao carregar clientes:",
         clientesResponse.error
       );
 
-      setErro(
-        "Não foi possível carregar suas clientes."
-      );
-
+      setErro("Não foi possível carregar suas clientes.");
       setCarregando(false);
       return;
     }
@@ -241,10 +243,7 @@ export function Agenda() {
         servicosResponse.error
       );
 
-      setErro(
-        "Não foi possível carregar seus serviços."
-      );
-
+      setErro("Não foi possível carregar seus serviços.");
       setCarregando(false);
       return;
     }
@@ -255,10 +254,7 @@ export function Agenda() {
         agendaResponse.error
       );
 
-      setErro(
-        "Não foi possível carregar sua agenda."
-      );
-
+      setErro("Não foi possível carregar sua agenda.");
       setCarregando(false);
       return;
     }
@@ -266,18 +262,14 @@ export function Agenda() {
     setClientes(clientesResponse.data ?? []);
 
     setServicos(
-      (servicosResponse.data ?? []).map(
-        (servico) => ({
-          ...servico,
-          duracao: Number(servico.duracao),
-          preco: Number(servico.preco),
-        })
-      )
+      (servicosResponse.data ?? []).map((servico) => ({
+        ...servico,
+        duracao: Number(servico.duracao),
+        preco: Number(servico.preco),
+      }))
     );
 
-    setAgendamentos(
-      agendaResponse.data ?? []
-    );
+    setAgendamentos(agendaResponse.data ?? []);
 
     setCarregando(false);
   }
@@ -286,16 +278,17 @@ export function Agenda() {
     carregarDados();
   }, [dataSelecionada]);
 
+  /* =========================
+     ATUALIZAR MODAL
+     ========================= */
+
   async function atualizarDadosModal() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Sua sessão expirou. Faça login novamente."
-      );
-
+      setErro("Sua sessão expirou. Faça login novamente.");
       return false;
     }
 
@@ -311,9 +304,7 @@ export function Agenda() {
 
       supabase
         .from("servicos")
-        .select(
-          "id, nome, categoria, duracao, preco"
-        )
+        .select("id, nome, categoria, duracao, preco")
         .eq("profissional_id", user.id)
         .order("categoria", {
           ascending: true,
@@ -329,10 +320,7 @@ export function Agenda() {
         clientesResponse.error
       );
 
-      setErro(
-        "Não foi possível carregar suas clientes."
-      );
-
+      setErro("Não foi possível carregar suas clientes.");
       return false;
     }
 
@@ -342,44 +330,36 @@ export function Agenda() {
         servicosResponse.error
       );
 
-      setErro(
-        "Não foi possível carregar seus serviços."
-      );
-
+      setErro("Não foi possível carregar seus serviços.");
       return false;
     }
 
-    setClientes(
-      clientesResponse.data ?? []
-    );
+    setClientes(clientesResponse.data ?? []);
 
     setServicos(
-      (servicosResponse.data ?? []).map(
-        (servico) => ({
-          ...servico,
-          duracao: Number(servico.duracao),
-          preco: Number(servico.preco),
-        })
-      )
+      (servicosResponse.data ?? []).map((servico) => ({
+        ...servico,
+        duracao: Number(servico.duracao),
+        preco: Number(servico.preco),
+      }))
     );
 
     return true;
   }
 
-  async function abrirAgendamento(
-    horarioInicial?: string
-  ) {
+  /* =========================
+     NOVO AGENDAMENTO
+     ========================= */
+
+  async function abrirAgendamento(horarioInicial?: string) {
     setErro("");
 
     setClienteId("");
     setServicoId("");
-    setHorario(
-      horarioInicial ?? "08:00"
-    );
+    setHorario(horarioInicial ?? "08:00");
     setStatus("confirmado");
 
-    const atualizado =
-      await atualizarDadosModal();
+    const atualizado = await atualizarDadosModal();
 
     if (!atualizado) {
       return;
@@ -419,46 +399,36 @@ export function Agenda() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro(
-        "Sua sessão expirou. Faça login novamente."
-      );
-
+      setErro("Sua sessão expirou. Faça login novamente.");
       setSalvando(false);
       return;
     }
 
-    const dataBanco =
-      formatarDataBanco(dataSelecionada);
+    const dataBanco = formatarDataBanco(dataSelecionada);
 
-    const horarioExistente =
-      agendamentos.some(
-        (agendamento) =>
-          agendamento.horario.slice(0, 5) ===
-          horario
-      );
+    const horarioExistente = agendamentos.some(
+      (agendamento) =>
+        agendamento.horario.slice(0, 5) === horario
+    );
 
     if (horarioExistente) {
-      setErro(
-        "Já existe um atendimento nesse horário."
-      );
-
+      setErro("Já existe um atendimento nesse horário.");
       setSalvando(false);
       return;
     }
 
-    const { data, error } =
-      await supabase
-        .from("agendamentos")
-        .insert({
-          profissional_id: user.id,
-          cliente_id: clienteId,
-          servico_id: servicoId,
-          data: dataBanco,
-          horario,
-          status,
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .insert({
+        profissional_id: user.id,
+        cliente_id: clienteId,
+        servico_id: servicoId,
+        data: dataBanco,
+        horario,
+        status,
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error(
@@ -477,9 +447,7 @@ export function Agenda() {
 
     setAgendamentos((atual) =>
       [...atual, data].sort((a, b) =>
-        a.horario.localeCompare(
-          b.horario
-        )
+        a.horario.localeCompare(b.horario)
       )
     );
 
@@ -487,34 +455,230 @@ export function Agenda() {
     setModalAberto(false);
   }
 
+  /* =========================
+     BUSCAS
+     ========================= */
+
   function obterCliente(id: string) {
     return clientes.find(
-      (cliente) =>
-        cliente.id === id
+      (cliente) => cliente.id === id
     );
   }
 
   function obterServico(id: string) {
     return servicos.find(
-      (servico) =>
-        servico.id === id
+      (servico) => servico.id === id
     );
   }
 
-  const agendamentoSelecionado =
-    selecionado
-      ? {
-          agendamento: selecionado,
+  const agendamentoSelecionado = selecionado
+    ? {
+        agendamento: selecionado,
+        cliente: obterCliente(
+          selecionado.cliente_id
+        ),
+        servico: obterServico(
+          selecionado.servico_id
+        ),
+      }
+    : null;
 
-          cliente: obterCliente(
-            selecionado.cliente_id
-          ),
+  /* =========================
+     ABRIR CONCLUSÃO
+     ========================= */
 
-          servico: obterServico(
-            selecionado.servico_id
-          ),
-        }
-      : null;
+  function abrirConclusao() {
+    if (!selecionado) return;
+
+    const servico = obterServico(
+      selecionado.servico_id
+    );
+
+    setValorRecebido(
+      servico ? String(servico.preco) : ""
+    );
+
+    setFormaPagamento("pix");
+    setCustoMaterial("");
+    setObservacoesFinanceiro("");
+    setErro("");
+
+    setConclusaoAberta(true);
+  }
+
+  function fecharConclusao() {
+    if (salvandoConclusao) return;
+
+    setConclusaoAberta(false);
+    setErro("");
+  }
+
+  /* =========================
+     CONCLUIR ATENDIMENTO
+     ========================= */
+
+  async function concluirAtendimento(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!selecionado) return;
+
+    setErro("");
+
+    const valor = Number(
+      valorRecebido.replace(",", ".")
+    );
+
+    const material = custoMaterial
+      ? Number(custoMaterial.replace(",", "."))
+      : 0;
+
+    if (Number.isNaN(valor) || valor < 0) {
+      setErro("Informe um valor recebido válido.");
+      return;
+    }
+
+    if (Number.isNaN(material) || material < 0) {
+      setErro("Informe um custo de material válido.");
+      return;
+    }
+
+    setSalvandoConclusao(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setErro("Sua sessão expirou. Faça login novamente.");
+      setSalvandoConclusao(false);
+      return;
+    }
+
+    /*
+     * Primeiro verificamos se já existe um
+     * lançamento financeiro para este atendimento.
+     */
+    const { data: financeiroExistente, error: consultaError } =
+      await supabase
+        .from("financeiro_atendimentos")
+        .select("id")
+        .eq("agendamento_id", selecionado.id)
+        .maybeSingle();
+
+    if (consultaError) {
+      console.error(
+        "Erro ao verificar financeiro:",
+        consultaError
+      );
+
+      setErro(
+        "Não foi possível verificar o financeiro deste atendimento."
+      );
+
+      setSalvandoConclusao(false);
+      return;
+    }
+
+    if (financeiroExistente) {
+      setErro(
+        "Este atendimento já possui um lançamento financeiro."
+      );
+
+      setSalvandoConclusao(false);
+      return;
+    }
+
+    /*
+     * Cria o lançamento financeiro.
+     */
+    const { error: financeiroError } = await supabase
+      .from("financeiro_atendimentos")
+      .insert({
+        profissional_id: user.id,
+        agendamento_id: selecionado.id,
+        valor_recebido: valor,
+        forma_pagamento: formaPagamento,
+        custo_material: material,
+        observacoes:
+          observacoesFinanceiro.trim() || null,
+      });
+
+    if (financeiroError) {
+      console.error(
+        "Erro ao registrar financeiro:",
+        financeiroError
+      );
+
+      /*
+       * Se o índice único detectar uma duplicação,
+       * tratamos como atendimento já lançado.
+       */
+      if (financeiroError.code === "23505") {
+        setErro(
+          "Este atendimento já possui um lançamento financeiro."
+        );
+      } else {
+        setErro(
+          financeiroError.message ||
+            "Não foi possível registrar o financeiro."
+        );
+      }
+
+      setSalvandoConclusao(false);
+      return;
+    }
+
+    /*
+     * Depois do financeiro salvo, marca o
+     * atendimento como concluído.
+     */
+    const { data: agendamentoAtualizado, error: statusError } =
+      await supabase
+        .from("agendamentos")
+        .update({
+          status: "concluido",
+        })
+        .eq("id", selecionado.id)
+        .eq("profissional_id", user.id)
+        .select()
+        .single();
+
+    if (statusError) {
+      console.error(
+        "Erro ao concluir agendamento:",
+        statusError
+      );
+
+      /*
+       * O financeiro já foi salvo. Então avisamos
+       * claramente para não tentar criar outro lançamento.
+       */
+      setErro(
+        "O financeiro foi registrado, mas não foi possível atualizar o status do atendimento. Atualize a página antes de tentar novamente."
+      );
+
+      setSalvandoConclusao(false);
+      return;
+    }
+
+    /*
+     * Atualiza o atendimento na tela.
+     */
+    setAgendamentos((atual) =>
+      atual.map((item) =>
+        item.id === selecionado.id
+          ? agendamentoAtualizado
+          : item
+      )
+    );
+
+    setSelecionado(agendamentoAtualizado);
+    setConclusaoAberta(false);
+    setSalvandoConclusao(false);
+    setErro("");
+  }
 
   return (
     <main className="page agenda-page">
@@ -523,9 +687,7 @@ export function Agenda() {
           <h1>Lumora</h1>
 
           <p>
-            {formatarDiaCompleto(
-              dataSelecionada
-            )}
+            {formatarDiaCompleto(dataSelecionada)}
           </p>
         </div>
 
@@ -533,9 +695,7 @@ export function Agenda() {
           <button
             type="button"
             className="agenda-add"
-            onClick={() =>
-              abrirAgendamento()
-            }
+            onClick={() => abrirAgendamento()}
             aria-label="Novo agendamento"
           >
             <Plus size={20} />
@@ -549,40 +709,33 @@ export function Agenda() {
 
       <div className="week">
         {dias.map((dia) => {
-          const selecionado =
-            mesmaData(
-              dia.data,
-              dataSelecionada
-            );
+          const selecionadoDia = mesmaData(
+            dia.data,
+            dataSelecionada
+          );
 
           return (
             <button
               key={dia.data.toISOString()}
               type="button"
               className={
-                selecionado
+                selecionadoDia
                   ? "selected-day"
                   : ""
               }
               onClick={() =>
-                setDataSelecionada(
-                  dia.data
-                )
+                setDataSelecionada(dia.data)
               }
             >
-              <span>
-                {dia.nome}
-              </span>
+              <span>{dia.nome}</span>
 
-              <b>
-                {dia.data.getDate()}
-              </b>
+              <b>{dia.data.getDate()}</b>
             </button>
           );
         })}
       </div>
 
-      {erro && !modalAberto && (
+      {erro && !modalAberto && !conclusaoAberta && (
         <div className="agenda-error">
           {erro}
         </div>
@@ -601,14 +754,12 @@ export function Agenda() {
         </div>
       ) : (
         <section className="timeline">
-          {horarios.map((horario) => {
+          {horarios.map((horarioHora) => {
             const agendamento =
               agendamentos.find(
                 (item) =>
-                  item.horario.slice(
-                    0,
-                    5
-                  ) === horario
+                  item.horario.slice(0, 5) ===
+                  horarioHora
               );
 
             if (!agendamento) {
@@ -616,33 +767,27 @@ export function Agenda() {
                 <button
                   type="button"
                   className="available available-button"
-                  key={horario}
+                  key={horarioHora}
                   onClick={() =>
                     abrirAgendamento(
-                      horario
+                      horarioHora
                     )
                   }
                 >
-                  <span>
-                    {horario}
-                  </span>
+                  <span>{horarioHora}</span>
 
-                  <b>
-                    Disponível
-                  </b>
+                  <b>Disponível</b>
                 </button>
               );
             }
 
-            const cliente =
-              obterCliente(
-                agendamento.cliente_id
-              );
+            const cliente = obterCliente(
+              agendamento.cliente_id
+            );
 
-            const servico =
-              obterServico(
-                agendamento.servico_id
-              );
+            const servico = obterServico(
+              agendamento.servico_id
+            );
 
             return (
               <button
@@ -650,13 +795,11 @@ export function Agenda() {
                 key={agendamento.id}
                 className={`appointment ${agendamento.status}`}
                 onClick={() =>
-                  setSelecionado(
-                    agendamento
-                  )
+                  setSelecionado(agendamento)
                 }
               >
                 <span className="slot-time">
-                  {horario}
+                  {horarioHora}
                 </span>
 
                 <div>
@@ -682,12 +825,14 @@ export function Agenda() {
         </section>
       )}
 
+      {/* =========================
+          MODAL NOVO AGENDAMENTO
+          ========================= */}
+
       {modalAberto && (
         <div
           className="agenda-modal-backdrop"
-          onClick={
-            fecharAgendamento
-          }
+          onClick={fecharAgendamento}
         >
           <section
             className="agenda-modal"
@@ -698,9 +843,7 @@ export function Agenda() {
             <button
               type="button"
               className="agenda-modal-close"
-              onClick={
-                fecharAgendamento
-              }
+              onClick={fecharAgendamento}
               aria-label="Fechar"
             >
               <X size={19} />
@@ -708,9 +851,7 @@ export function Agenda() {
 
             <div className="agenda-modal-handle" />
 
-            <h2>
-              Agendar atendimento
-            </h2>
+            <h2>Agendar atendimento</h2>
 
             <p>
               {formatarDiaCompleto(
@@ -742,9 +883,7 @@ export function Agenda() {
               </div>
             ) : (
               <form
-                onSubmit={
-                  salvarAgendamento
-                }
+                onSubmit={salvarAgendamento}
                 className="agenda-form"
               >
                 <label>
@@ -865,9 +1004,7 @@ export function Agenda() {
                   <button
                     type="button"
                     className="agenda-cancel"
-                    onClick={
-                      fecharAgendamento
-                    }
+                    onClick={fecharAgendamento}
                     disabled={salvando}
                   >
                     Cancelar
@@ -900,9 +1037,7 @@ export function Agenda() {
               <button
                 type="button"
                 className="agenda-cancel full"
-                onClick={
-                  fecharAgendamento
-                }
+                onClick={fecharAgendamento}
               >
                 Fechar
               </button>
@@ -911,139 +1046,325 @@ export function Agenda() {
         </div>
       )}
 
-      {agendamentoSelecionado && (
-        <div
-          className="sheet-backdrop"
-          onClick={() =>
-            setSelecionado(null)
-          }
-        >
-          <section
-            className="sheet"
-            onClick={(event) =>
-              event.stopPropagation()
+      {/* =========================
+          DETALHES DO AGENDAMENTO
+          ========================= */}
+
+      {agendamentoSelecionado &&
+        !conclusaoAberta && (
+          <div
+            className="sheet-backdrop"
+            onClick={() =>
+              setSelecionado(null)
             }
           >
-            <button
-              type="button"
-              className="close"
-              onClick={() =>
-                setSelecionado(null)
+            <section
+              className="sheet"
+              onClick={(event) =>
+                event.stopPropagation()
               }
             >
-              <X />
-            </button>
+              <button
+                type="button"
+                className="close"
+                onClick={() =>
+                  setSelecionado(null)
+                }
+              >
+                <X />
+              </button>
 
-            <div className="handle" />
+              <div className="handle" />
 
-            <h2>
-              {agendamentoSelecionado
-                .cliente?.nome ??
-                "Cliente"}
-            </h2>
+              <h2>
+                {agendamentoSelecionado
+                  .cliente?.nome ??
+                  "Cliente"}
+              </h2>
 
-            <p className="muted">
-              {formatarDiaCompleto(
-                dataSelecionada
-              )}{" "}
-              às{" "}
-              {agendamentoSelecionado
-                .agendamento.horario.slice(
+              <p className="muted">
+                {formatarDiaCompleto(
+                  dataSelecionada
+                )}{" "}
+                às{" "}
+                {agendamentoSelecionado.agendamento.horario.slice(
                   0,
                   5
                 )}{" "}
-              •{" "}
-              {nomeStatus(
-                agendamentoSelecionado
-                  .agendamento.status
-              )}
-            </p>
+                •{" "}
+                {nomeStatus(
+                  agendamentoSelecionado
+                    .agendamento.status
+                )}
+              </p>
 
-            <div className="detail">
-              <span>
-                Procedimento:
-              </span>
-
-              <b>
-                {agendamentoSelecionado
-                  .servico?.nome ??
-                  "—"}
-              </b>
-
-              <span>
-                Duração:
-              </span>
-
-              <b>
-                {agendamentoSelecionado
-                  .servico?.duracao ??
-                  0}{" "}
-                minutos
-              </b>
-            </div>
-
-            <div className="money">
-              <div>
+              <div className="detail">
                 <span>
-                  Valor cobrado
+                  Procedimento:
                 </span>
 
                 <b>
-                  {formatarValor(
-                    Number(
-                      agendamentoSelecionado
-                        .servico?.preco ??
-                        0
-                    )
-                  )}
+                  {agendamentoSelecionado
+                    .servico?.nome ??
+                    "—"}
+                </b>
+
+                <span>
+                  Duração:
+                </span>
+
+                <b>
+                  {agendamentoSelecionado
+                    .servico?.duracao ??
+                    0}{" "}
+                  minutos
                 </b>
               </div>
-            </div>
 
-            {agendamentoSelecionado
-              .cliente?.telefone && (
-              <a
-                className="whatsapp"
-                href={`https://wa.me/${agendamentoSelecionado.cliente.telefone.replace(
-                  /\D/g,
-                  ""
-                )}?text=${encodeURIComponent(
-                  `Olá, ${agendamentoSelecionado.cliente.nome}! 💅 Passando para confirmar seu horário hoje às ${agendamentoSelecionado.agendamento.horario.slice(
-                    0,
-                    5
-                  )}.`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <MessageCircle />
+              <div className="money">
+                <div>
+                  <span>
+                    Valor cobrado
+                  </span>
 
-                Enviar lembrete no WhatsApp
-              </a>
-            )}
+                  <b>
+                    {formatarValor(
+                      Number(
+                        agendamentoSelecionado
+                          .servico?.preco ??
+                          0
+                      )
+                    )}
+                  </b>
+                </div>
+              </div>
 
-            <div className="sheet-actions">
+              {agendamentoSelecionado
+                .cliente?.telefone && (
+                <a
+                  className="whatsapp"
+                  href={`https://wa.me/${agendamentoSelecionado.cliente.telefone.replace(
+                    /\D/g,
+                    ""
+                  )}?text=${encodeURIComponent(
+                    `Olá, ${agendamentoSelecionado.cliente.nome}! 💅 Passando para confirmar seu horário hoje às ${agendamentoSelecionado.agendamento.horario.slice(
+                      0,
+                      5
+                    )}.`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle />
+
+                  Enviar lembrete no WhatsApp
+                </a>
+              )}
+
+              <div className="sheet-actions">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelecionado(null)
+                  }
+                >
+                  Fechar
+                </button>
+
+                {agendamentoSelecionado
+                  .agendamento.status !==
+                  "concluido" && (
+                  <button
+                    type="button"
+                    onClick={abrirConclusao}
+                  >
+                    <Check
+                      size={15}
+                    />{" "}
+                    Concluir
+                  </button>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+      {/* =========================
+          MODAL CONCLUIR ATENDIMENTO
+          ========================= */}
+
+      {conclusaoAberta &&
+        agendamentoSelecionado && (
+          <div
+            className="agenda-modal-backdrop"
+            onClick={fecharConclusao}
+          >
+            <section
+              className="agenda-modal"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
               <button
                 type="button"
-                onClick={() =>
-                  setSelecionado(null)
-                }
+                className="agenda-modal-close"
+                onClick={fecharConclusao}
+                aria-label="Fechar"
               >
-                Fechar
+                <X size={19} />
               </button>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setSelecionado(null)
+              <div className="agenda-modal-handle" />
+
+              <h2>
+                Concluir atendimento
+              </h2>
+
+              <p>
+                {agendamentoSelecionado
+                  .cliente?.nome ??
+                  "Cliente"}{" "}
+                •{" "}
+                {agendamentoSelecionado
+                  .servico?.nome ??
+                  "Serviço"}
+              </p>
+
+              <form
+                className="agenda-form"
+                onSubmit={
+                  concluirAtendimento
                 }
               >
-                Editar
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+                <label>
+                  Valor recebido
+
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ex.: 150,00"
+                    value={valorRecebido}
+                    onChange={(event) =>
+                      setValorRecebido(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  Forma de pagamento
+
+                  <select
+                    value={formaPagamento}
+                    onChange={(event) =>
+                      setFormaPagamento(
+                        event.target.value
+                      )
+                    }
+                  >
+                    <option value="pix">
+                      Pix
+                    </option>
+
+                    <option value="dinheiro">
+                      Dinheiro
+                    </option>
+
+                    <option value="cartao_credito">
+                      Cartão de crédito
+                    </option>
+
+                    <option value="cartao_debito">
+                      Cartão de débito
+                    </option>
+
+                    <option value="outro">
+                      Outro
+                    </option>
+                  </select>
+                </label>
+
+                <label>
+                  Custo de material
+
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ex.: 25,00"
+                    value={custoMaterial}
+                    onChange={(event) =>
+                      setCustoMaterial(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  Observação
+
+                  <textarea
+                    rows={3}
+                    placeholder="Opcional"
+                    value={
+                      observacoesFinanceiro
+                    }
+                    onChange={(event) =>
+                      setObservacoesFinanceiro(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                {erro && (
+                  <div className="agenda-error">
+                    {erro}
+                  </div>
+                )}
+
+                <div className="agenda-modal-actions">
+                  <button
+                    type="button"
+                    className="agenda-cancel"
+                    onClick={fecharConclusao}
+                    disabled={
+                      salvandoConclusao
+                    }
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="agenda-save"
+                    disabled={
+                      salvandoConclusao
+                    }
+                  >
+                    {salvandoConclusao ? (
+                      <>
+                        <LoaderCircle
+                          size={17}
+                          className="spin"
+                        />
+
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={17} />
+
+                        Concluir
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
     </main>
   );
 }
