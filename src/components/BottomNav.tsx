@@ -13,8 +13,7 @@ export type Page =
   | "agenda"
   | "financeiro"
   | "servicos"
-  | "clientes"
-  | "jornada";
+  | "clientes";
 
 const items: [Page, string, ReactNode][] = [
   ["inicio", "Início", <Home />],
