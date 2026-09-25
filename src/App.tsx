@@ -154,6 +154,10 @@ export default function App() {
         {page === "clientes" && (
           <Clientes />
         )}
+        
+        {page === "jornada" && (
+          <Jornada />
+        )}
 
         <BottomNav
           page={page}
