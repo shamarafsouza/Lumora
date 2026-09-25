@@ -1882,3 +1882,135 @@ body {
   opacity: .65;
   cursor: not-allowed;
 }
+
+/* =========================
+   PRODUTOS DO SERVIÇO
+   ========================= */
+
+.service-products-section {
+  margin: 20px 0 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffaf7;
+}
+
+.service-products-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.service-products-title > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.service-products-title strong {
+  font-family: "Playfair Display", serif;
+  font-size: 17px;
+  color: var(--wine-dark);
+}
+
+.service-products-title span {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.service-products-title > svg {
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.service-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.service-product-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.service-product-option:hover {
+  border-color: var(--gold);
+}
+
+.service-product-option.selected {
+  border-color: var(--wine);
+  background: #fff5f8;
+}
+
+.service-product-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.service-product-check {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #d8c6c0;
+  border-radius: 6px;
+  background: #fff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.service-product-option.selected
+  .service-product-check {
+  border-color: var(--wine);
+  background: var(--wine);
+}
+
+.service-product-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.service-product-info strong {
+  color: #4b3039;
+  font-size: 14px;
+}
+
+.service-product-info small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.service-products-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 11px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.service-products-empty svg {
+  flex-shrink: 0;
+  color: var(--gold);
+}
