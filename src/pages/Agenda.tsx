@@ -135,7 +135,6 @@ export function Agenda() {
   const [conclusaoAberta, setConclusaoAberta] = useState(false);
   const [valorRecebido, setValorRecebido] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [custoMaterial, setCustoMaterial] = useState("");
   const [observacoesFinanceiro, setObservacoesFinanceiro] =
     useState("");
   const [salvandoConclusao, setSalvandoConclusao] =
@@ -504,7 +503,6 @@ export function Agenda() {
     );
 
     setFormaPagamento("pix");
-    setCustoMaterial("");
     setObservacoesFinanceiro("");
     setErro("");
 
@@ -535,17 +533,8 @@ export function Agenda() {
       valorRecebido.replace(",", ".")
     );
 
-    const material = custoMaterial
-      ? Number(custoMaterial.replace(",", "."))
-      : 0;
-
     if (Number.isNaN(valor) || valor < 0) {
       setErro("Informe um valor recebido válido.");
-      return;
-    }
-
-    if (Number.isNaN(material) || material < 0) {
-      setErro("Informe um custo de material válido.");
       return;
     }
 
@@ -605,7 +594,7 @@ export function Agenda() {
         agendamento_id: selecionado.id,
         valor_recebido: valor,
         forma_pagamento: formaPagamento,
-        custo_material: material,
+        custo_material: 0,
         observacoes:
           observacoesFinanceiro.trim() || null,
       });
