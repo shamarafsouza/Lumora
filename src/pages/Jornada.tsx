@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock3, Save } from "lucide-react";
+import { Clock3, Save, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type DiaSemana = {
@@ -9,18 +9,60 @@ type DiaSemana = {
   ativo: boolean;
 };
 
+type JornadaProps = {
+  onClose?: () => void;
+};
+
 const diasIniciais: DiaSemana[] = [
-  { numero: 1, nome: "Segunda-feira", abreviacao: "SEG", ativo: true },
-  { numero: 2, nome: "Terça-feira", abreviacao: "TER", ativo: true },
-  { numero: 3, nome: "Quarta-feira", abreviacao: "QUA", ativo: true },
-  { numero: 4, nome: "Quinta-feira", abreviacao: "QUI", ativo: true },
-  { numero: 5, nome: "Sexta-feira", abreviacao: "SEX", ativo: true },
-  { numero: 6, nome: "Sábado", abreviacao: "SÁB", ativo: false },
-  { numero: 7, nome: "Domingo", abreviacao: "DOM", ativo: false },
+  {
+    numero: 1,
+    nome: "Segunda-feira",
+    abreviacao: "SEG",
+    ativo: true,
+  },
+  {
+    numero: 2,
+    nome: "Terça-feira",
+    abreviacao: "TER",
+    ativo: true,
+  },
+  {
+    numero: 3,
+    nome: "Quarta-feira",
+    abreviacao: "QUA",
+    ativo: true,
+  },
+  {
+    numero: 4,
+    nome: "Quinta-feira",
+    abreviacao: "QUI",
+    ativo: true,
+  },
+  {
+    numero: 5,
+    nome: "Sexta-feira",
+    abreviacao: "SEX",
+    ativo: true,
+  },
+  {
+    numero: 6,
+    nome: "Sábado",
+    abreviacao: "SÁB",
+    ativo: false,
+  },
+  {
+    numero: 7,
+    nome: "Domingo",
+    abreviacao: "DOM",
+    ativo: false,
+  },
 ];
 
-export default function Jornada() {
-  const [dias, setDias] = useState<DiaSemana[]>(diasIniciais);
+export default function Jornada({
+  onClose,
+}: JornadaProps) {
+  const [dias, setDias] =
+    useState<DiaSemana[]>(diasIniciais);
 
   const [intervaloInicio, setIntervaloInicio] =
     useState("12:00");
@@ -28,10 +70,17 @@ export default function Jornada() {
   const [intervaloFim, setIntervaloFim] =
     useState("13:00");
 
-  const [carregando, setCarregando] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [mensagem, setMensagem] = useState("");
-  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] =
+    useState(true);
+
+  const [salvando, setSalvando] =
+    useState(false);
+
+  const [mensagem, setMensagem] =
+    useState("");
+
+  const [erro, setErro] =
+    useState("");
 
   useEffect(() => {
     carregarJornada();
@@ -46,25 +95,30 @@ export default function Jornada() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       setCarregando(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("horarios_trabalho")
-      .select(
-        "dia_semana, ativo, intervalo_inicio, intervalo_fim"
-      )
-      .eq("profissional_id", user.id)
-      .order("dia_semana");
+    const { data, error } =
+      await supabase
+        .from("horarios_trabalho")
+        .select(
+          "dia_semana, ativo, intervalo_inicio, intervalo_fim"
+        )
+        .eq("profissional_id", user.id)
+        .order("dia_semana");
 
     if (error) {
       console.error(error);
+
       setErro(
-        error.message ||
-          "Não foi possível carregar sua jornada."
+        "Não foi possível carregar sua jornada."
       );
+
       setCarregando(false);
       return;
     }
@@ -73,7 +127,8 @@ export default function Jornada() {
       setDias((atual) =>
         atual.map((dia) => {
           const salvo = data.find(
-            (item) => item.dia_semana === dia.numero
+            (item) =>
+              item.dia_semana === dia.numero
           );
 
           if (!salvo) {
@@ -95,11 +150,15 @@ export default function Jornada() {
 
       if (primeiro) {
         setIntervaloInicio(
-          String(primeiro.intervalo_inicio).slice(0, 5)
+          String(
+            primeiro.intervalo_inicio
+          ).slice(0, 5)
         );
 
         setIntervaloFim(
-          String(primeiro.intervalo_fim).slice(0, 5)
+          String(
+            primeiro.intervalo_fim
+          ).slice(0, 5)
         );
       }
     }
@@ -111,7 +170,10 @@ export default function Jornada() {
     setDias((atual) =>
       atual.map((dia) =>
         dia.numero === numero
-          ? { ...dia, ativo: !dia.ativo }
+          ? {
+              ...dia,
+              ativo: !dia.ativo,
+            }
           : dia
       )
     );
@@ -127,7 +189,10 @@ export default function Jornada() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       setSalvando(false);
       return;
     }
@@ -136,6 +201,7 @@ export default function Jornada() {
       setErro(
         "O horário final do almoço precisa ser depois do horário inicial."
       );
+
       setSalvando(false);
       return;
     }
@@ -152,11 +218,13 @@ export default function Jornada() {
         : null,
     }));
 
-    const { error } = await supabase
-      .from("horarios_trabalho")
-      .upsert(registros, {
-        onConflict: "profissional_id,dia_semana",
-      });
+    const { error } =
+      await supabase
+        .from("horarios_trabalho")
+        .upsert(registros, {
+          onConflict:
+            "profissional_id,dia_semana",
+        });
 
     if (error) {
       console.error(error);
@@ -170,7 +238,10 @@ export default function Jornada() {
       return;
     }
 
-    setMensagem("Jornada salva com sucesso.");
+    setMensagem(
+      "Jornada salva com sucesso."
+    );
+
     setSalvando(false);
 
     setTimeout(() => {
@@ -180,24 +251,25 @@ export default function Jornada() {
 
   if (carregando) {
     return (
-      <main className="page jornada-page">
-        <div className="jornada-loading">
-          <Clock3 size={22} />
-          <span>Carregando sua jornada...</span>
-        </div>
-      </main>
+      <div className="jornada-loading">
+        <Clock3 size={22} />
+        <span>
+          Carregando sua jornada...
+        </span>
+      </div>
     );
   }
 
   return (
-    <main className="page jornada-page">
-      <header className="top">
+    <div className="jornada-configuracao">
+
+      <div className="jornada-config-header">
         <div>
           <span className="jornada-eyebrow">
-            LUMORA
+            AGENDA
           </span>
 
-          <h1>Minha jornada</h1>
+          <h2>Minha jornada</h2>
 
           <p>
             Configure os dias em que você costuma
@@ -205,17 +277,29 @@ export default function Jornada() {
           </p>
         </div>
 
-        <div className="avatar">LU</div>
-      </header>
+        {onClose && (
+          <button
+            type="button"
+            className="jornada-close"
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            <X size={20} />
+          </button>
+        )}
+      </div>
 
       <section className="jornada-card">
+
         <div className="jornada-section-title">
           <div>
-            <h2>Dias de atendimento</h2>
+            <h3>
+              Dias de atendimento
+            </h3>
 
             <p>
-              Selecione os dias em que você costuma
-              trabalhar.
+              Selecione os dias em que você
+              costuma trabalhar.
             </p>
           </div>
         </div>
@@ -226,10 +310,14 @@ export default function Jornada() {
               type="button"
               key={dia.numero}
               className={`dia-item ${
-                dia.ativo ? "ativo" : ""
+                dia.ativo
+                  ? "ativo"
+                  : ""
               }`}
               onClick={() =>
-                alternarDia(dia.numero)
+                alternarDia(
+                  dia.numero
+                )
               }
             >
               <span className="dia-abreviacao">
@@ -241,30 +329,39 @@ export default function Jornada() {
               </span>
 
               <span className="dia-check">
-                {dia.ativo ? "✓" : ""}
+                {dia.ativo
+                  ? "✓"
+                  : ""}
               </span>
             </button>
           ))}
         </div>
+
       </section>
 
       <section className="jornada-card">
+
         <div className="jornada-section-title">
+
           <div className="jornada-title-icon">
             <Clock3 size={18} />
           </div>
 
           <div>
-            <h2>Intervalo para almoço</h2>
+            <h3>
+              Intervalo para almoço
+            </h3>
 
             <p>
-              O Lumora descontará esse período
-              automaticamente.
+              Esse período será
+              descontado automaticamente.
             </p>
           </div>
+
         </div>
 
         <div className="intervalo-inputs">
+
           <label>
             <span>Início</span>
 
@@ -296,19 +393,25 @@ export default function Jornada() {
               }
             />
           </label>
+
         </div>
+
       </section>
 
       <div className="jornada-info">
+
         <strong>
-          O Lumora calcula o restante automaticamente.
+          O Lumora calcula o restante
+          automaticamente.
         </strong>
 
         <p>
-          Conforme você agenda seus clientes, o sistema
-          calcula o tempo ocupado, horários livres e a
-          utilização da sua agenda.
+          Conforme você agenda seus clientes,
+          o sistema calcula o tempo ocupado,
+          os horários livres e a utilização
+          da sua agenda.
         </p>
+
       </div>
 
       {erro && (
@@ -335,6 +438,7 @@ export default function Jornada() {
           ? "Salvando..."
           : "Salvar jornada"}
       </button>
-    </main>
+
+    </div>
   );
 }
