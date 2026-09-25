@@ -1348,3 +1348,272 @@ body {
   font-size: 11px;
   line-height: 1.5;
 }
+
+/* =========================
+   CONFIGURAÇÃO DA JORNADA
+   ========================= */
+
+.agenda-settings {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #ead9dc;
+  border-radius: 50%;
+  background: #fff;
+  color: #8f2349;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.agenda-settings:hover {
+  background: #f8eef1;
+}
+
+.jornada-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(38, 20, 29, 0.48);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.jornada-modal {
+  width: min(100%, 430px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fffaf7;
+  border-radius: 26px 26px 0 0;
+  padding: 24px 20px 30px;
+  box-shadow: 0 -12px 40px rgba(50, 20, 30, 0.18);
+}
+
+.jornada-config-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.jornada-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #9b2850;
+}
+
+.jornada-config-header h2 {
+  margin: 0;
+  color: #7e1f42;
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.jornada-config-header p {
+  margin: 6px 0 0;
+  color: #987f86;
+  font-size: 12px;
+}
+
+.jornada-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #f4e7ea;
+  color: #7e1f42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.jornada-card {
+  background: #fff;
+  border: 1px solid #eadfe0;
+  border-radius: 18px;
+  padding: 17px;
+  margin-bottom: 14px;
+}
+
+.jornada-section-title h3 {
+  margin: 0;
+  color: #7e1f42;
+  font-family: Georgia, serif;
+  font-size: 17px;
+}
+
+.jornada-section-title p {
+  margin: 5px 0 14px;
+  color: #9a858a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.dias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dia-item {
+  width: 100%;
+  border: 1px solid #eee2e4;
+  background: #fff;
+  border-radius: 12px;
+  min-height: 45px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  color: #856d73;
+  text-align: left;
+}
+
+.dia-item.ativo {
+  border-color: #e5c5ce;
+  background: #fdf4f6;
+  color: #7e1f42;
+}
+
+.dia-abreviacao {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #f1e7e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.dia-item.ativo .dia-abreviacao {
+  background: #8f2349;
+  color: #fff;
+}
+
+.dia-nome {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dia-check {
+  color: #8f2349;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.jornada-title-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  background: #f5e8eb;
+  color: #8f2349;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  float: left;
+  margin-right: 10px;
+}
+
+.intervalo-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.intervalo-inputs label {
+  flex: 1;
+}
+
+.intervalo-inputs label span {
+  display: block;
+  margin-bottom: 5px;
+  color: #907c82;
+  font-size: 10px;
+}
+
+.intervalo-inputs input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5d8db;
+  border-radius: 11px;
+  padding: 11px;
+  background: #fffaf9;
+  color: #5f3b45;
+  font-size: 13px;
+}
+
+.intervalo-separador {
+  padding-bottom: 11px;
+  color: #a48d93;
+  font-size: 11px;
+}
+
+.jornada-info {
+  margin: 5px 2px 15px;
+  padding: 13px;
+  border-radius: 14px;
+  background: #f7eeef;
+}
+
+.jornada-info strong {
+  display: block;
+  color: #7e1f42;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.jornada-info p {
+  margin: 0;
+  color: #927d83;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.jornada-salvar {
+  width: 100%;
+  border: 0;
+  border-radius: 13px;
+  padding: 13px;
+  background: #8f2349;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.jornada-salvar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.jornada-sucesso {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e8f5ef;
+  color: #28704d;
+  font-size: 11px;
+}
+
+.jornada-loading {
+  padding: 40px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #8f2349;
+  font-size: 12px;
+}
