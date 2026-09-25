@@ -11,6 +11,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Agenda } from "./pages/Agenda";
 import Financeiro from "./pages/Financeiro";
 import { Servicos } from "./pages/Servicos";
+import Jornada from "./pages/Jornada";
 import { Clientes } from "./pages/Clientes";
 
 import { Inicio } from "./pages/Inicio";
