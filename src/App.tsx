@@ -30,10 +30,22 @@ export default function App() {
     useState<Tela>("inicio");
 
   const [page, setPage] =
-    useState<Page>("inicio");
+    useState<Page>(() => {
+      const paginaSalva =
+        localStorage.getItem("lumora-pagina") as Page | null;
+
+      return paginaSalva || "inicio";
+    });
 
   const [carregandoSessao, setCarregandoSessao] =
     useState(true);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "lumora-pagina",
+      page
+    );
+  }, [page]);
 
   useEffect(() => {
     let montado = true;
@@ -47,7 +59,11 @@ export default function App() {
 
       if (session) {
         setTela("app");
-        setPage("inicio");
+
+        const paginaSalva =
+          localStorage.getItem("lumora-pagina") as Page | null;
+
+        setPage(paginaSalva || "inicio");
       }
 
       setCarregandoSessao(false);
@@ -61,7 +77,11 @@ export default function App() {
       (_event, session) => {
         if (session) {
           setTela("app");
-          setPage("inicio");
+
+          const paginaSalva =
+            localStorage.getItem("lumora-pagina") as Page | null;
+
+          setPage(paginaSalva || "inicio");
         } else {
           setTela("inicio");
           setPage("inicio");
@@ -122,7 +142,11 @@ export default function App() {
             }
             onLogin={() => {
               setTela("app");
-              setPage("inicio");
+
+              const paginaSalva =
+                localStorage.getItem("lumora-pagina") as Page | null;
+
+              setPage(paginaSalva || "inicio");
             }}
           />
         </div>
