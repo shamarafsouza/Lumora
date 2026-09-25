@@ -1289,22 +1289,6 @@ export function Agenda() {
                 </label>
 
                 <label>
-                  Custo de material
-
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="Ex.: 25,00"
-                    value={custoMaterial}
-                    onChange={(event) =>
-                      setCustoMaterial(
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-
-                <label>
                   Observação
 
                   <textarea
