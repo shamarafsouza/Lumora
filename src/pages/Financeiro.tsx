@@ -98,7 +98,6 @@ const Financeiro = () => {
   const [agendamentoId, setAgendamentoId] = useState("");
   const [valorRecebido, setValorRecebido] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [custoMaterial, setCustoMaterial] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   const [descricaoDespesa, setDescricaoDespesa] = useState("");
@@ -266,7 +265,6 @@ const Financeiro = () => {
     setAgendamentoId("");
     setValorRecebido("");
     setFormaPagamento("pix");
-    setCustoMaterial("");
     setObservacoes("");
 
     setDescricaoDespesa("");
@@ -403,10 +401,6 @@ const Financeiro = () => {
         valorRecebido.replace(",", ".")
       );
 
-      const material = Number(
-        custoMaterial.replace(",", ".") || 0
-      );
-
       if (!valor || valor <= 0) {
         setErro("Informe um valor recebido.");
         setSalvando(false);
@@ -420,7 +414,7 @@ const Financeiro = () => {
           agendamento_id: agendamentoId || null,
           valor_recebido: valor,
           forma_pagamento: formaPagamento,
-          custo_material: material,
+          custo_material: 0,
           observacoes:
             observacoes.trim() || null,
         });
@@ -684,6 +678,14 @@ const Financeiro = () => {
                         item.valor_recebido
                       )}
                     </strong>
+                    {item.custo_material > 0 && (
+                      <small className="financeiro-lucro">
+                        Lucro:{" "}
+                        {formatarMoeda(
+                          item.valor_recebido - item.custo_material
+                        )}
+                      </small>
+                    )}
                   </div>
                 </article>
               );
@@ -888,20 +890,14 @@ const Financeiro = () => {
                     </select>
                   </label>
 
-                  <label>
-                    Custo de material
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      value={custoMaterial}
-                      onChange={(event) =>
-                        setCustoMaterial(
-                          event.target.value
-                        )
-                      }
-                    />
-                  </label>
+                  <div className="financeiro-material-auto">
+                    <strong>Material calculado automaticamente</strong>
+                    <span>
+                      Para atendimentos concluídos pela Agenda, o custo dos
+                      produtos vinculados ao serviço será registrado
+                      automaticamente.
+                    </span>
+                  </div>
                 </>
               ) : (
                 <>
