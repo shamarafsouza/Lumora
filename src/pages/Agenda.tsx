@@ -584,57 +584,98 @@ export function Agenda() {
      CONCLUIR ATENDIMENTO
      ========================= */
 
-  function obterConsumoEstimadoProdutos(servicoId: string) {
+  function calcularCustoMaterial(servicoId: string) {
     const produtoIds = servicoProdutos[servicoId] ?? [];
 
-    return produtoIds
+    return produtoIds.reduce((total, produtoId) => {
+      const produto = produtos.find((item) => item.id === produtoId);
+
+      if (!produto || produto.quantidade_embalagem <= 0 || produto.preco_compra <= 0) {
+        return total;
+      }
+
+      // Estimativa automática do Lumora:
+      // produtos medidos em g/ml usam 5% da embalagem por atendimento;
+      // produtos em unidade usam 1 unidade.
+      const quantidadeEstimada =
+        produto.unidade === "un"
+          ? 1
+          : Math.min(produto.quantidade_embalagem, produto.quantidade_embalagem * 0.05);
+
+      const custoUnitario =
+        produto.preco_compra / produto.quantidade_embalagem;
+
+      return total + custoUnitario * quantidadeEstimada;
+    }, 0);
+  }
+
+  async function registrarSaidaEstoque(
+    agendamentoId: string,
+    servicoId: string,
+    profissionalId: string
+  ) {
+    const produtoIds = servicoProdutos[servicoId] ?? [];
+
+    if (produtoIds.length === 0) {
+      return { error: null as any };
+    }
+
+    const { data: movimentacoesExistentes, error: consultaError } =
+      await supabase
+        .from("movimentacoes_produtos")
+        .select("produto_id")
+        .eq("agendamento_id", agendamentoId)
+        .eq("profissional_id", profissionalId);
+
+    if (consultaError) {
+      return { error: consultaError };
+    }
+
+    const jaRegistrados = new Set(
+      (movimentacoesExistentes ?? []).map((item) => item.produto_id)
+    );
+
+    const movimentacoes = produtoIds
+      .filter((produtoId) => !jaRegistrados.has(produtoId))
       .map((produtoId) => {
         const produto = produtos.find((item) => item.id === produtoId);
 
-        if (
-          !produto ||
-          produto.quantidade_embalagem <= 0 ||
-          produto.preco_compra <= 0
-        ) {
+        if (!produto || produto.quantidade_embalagem <= 0) {
           return null;
         }
 
-        // Estimativa automática do Lumora:
-        // produtos medidos em g/ml usam 5% da embalagem por atendimento;
-        // produtos em unidade usam 1 unidade.
         const quantidadeEstimada =
           produto.unidade === "un"
             ? 1
-            : Math.min(
-                produto.quantidade_embalagem,
-                produto.quantidade_embalagem * 0.05
-              );
-
-        const custoUnitario =
-          produto.preco_compra / produto.quantidade_embalagem;
+            : produto.quantidade_embalagem * 0.05;
 
         return {
-          produto,
-          quantidade: quantidadeEstimada,
-          custo: custoUnitario * quantidadeEstimada,
+          profissional_id: profissionalId,
+          produto_id: produtoId,
+          tipo: "saida",
+          quantidade: Number(quantidadeEstimada.toFixed(3)),
+          origem: "atendimento",
+          agendamento_id: agendamentoId,
         };
       })
-      .filter(
-        (
-          item
-        ): item is {
-          produto: Produto;
-          quantidade: number;
-          custo: number;
-        } => item !== null
-      );
-  }
+      .filter((item): item is {
+        profissional_id: string;
+        produto_id: string;
+        tipo: string;
+        quantidade: number;
+        origem: string;
+        agendamento_id: string;
+      } => item !== null);
 
-  function calcularCustoMaterial(servicoId: string) {
-    return obterConsumoEstimadoProdutos(servicoId).reduce(
-      (total, item) => total + item.custo,
-      0
-    );
+    if (movimentacoes.length === 0) {
+      return { error: null as any };
+    }
+
+    const { error } = await supabase
+      .from("movimentacoes_produtos")
+      .insert(movimentacoes);
+
+    return { error };
   }
 
   async function concluirAtendimento(
@@ -699,83 +740,6 @@ export function Agenda() {
 
       setSalvandoConclusao(false);
       return;
-    }
-
-    const consumoEstimado = obterConsumoEstimadoProdutos(
-      selecionado.servico_id
-    );
-
-    /*
-     * Registra o consumo estimado dos produtos utilizados
-     * neste atendimento.
-     *
-     * Não pedimos quantidade à profissional: o Lumora usa
-     * a mesma estimativa automática utilizada no custo do material.
-     *
-     * Antes de inserir, verificamos se já existe uma movimentação
-     * para evitar duplicação caso o atendimento seja processado
-     * novamente.
-     */
-    if (consumoEstimado.length > 0) {
-      const { data: movimentacoesExistentes, error: movimentacoesConsultaError } =
-        await supabase
-          .from("movimentacoes_produtos")
-          .select("produto_id")
-          .eq("profissional_id", user.id)
-          .eq("agendamento_id", selecionado.id)
-          .eq("origem", "atendimento");
-
-      if (movimentacoesConsultaError) {
-        console.error(
-          "Erro ao verificar consumo dos produtos:",
-          movimentacoesConsultaError
-        );
-
-        setErro(
-          "Não foi possível verificar o consumo dos produtos deste atendimento."
-        );
-        setSalvandoConclusao(false);
-        return;
-      }
-
-      const produtosJaMovimentados = new Set(
-        (movimentacoesExistentes ?? []).map(
-          (movimentacao) => movimentacao.produto_id
-        )
-      );
-
-      const novasMovimentacoes = consumoEstimado
-        .filter(
-          (item) => !produtosJaMovimentados.has(item.produto.id)
-        )
-        .map((item) => ({
-          profissional_id: user.id,
-          produto_id: item.produto.id,
-          tipo: "saida",
-          quantidade: item.quantidade,
-          origem: "atendimento",
-          agendamento_id: selecionado.id,
-        }));
-
-      if (novasMovimentacoes.length > 0) {
-        const { error: movimentacoesError } = await supabase
-          .from("movimentacoes_produtos")
-          .insert(novasMovimentacoes);
-
-        if (movimentacoesError) {
-          console.error(
-            "Erro ao registrar consumo dos produtos:",
-            movimentacoesError
-          );
-
-          setErro(
-            movimentacoesError.message ||
-              "Não foi possível registrar o consumo dos produtos."
-          );
-          setSalvandoConclusao(false);
-          return;
-        }
-      }
     }
 
     /*
@@ -854,6 +818,17 @@ export function Agenda() {
     }
 
     /*
+     * Registra automaticamente a saída dos produtos usados
+     * neste serviço. A mesma estimativa usada no custo do
+     * material é usada para o estoque.
+     */
+    const { error: estoqueError } = await registrarSaidaEstoque(
+      selecionado.id,
+      selecionado.servico_id,
+      user.id
+    );
+
+    /*
      * Atualiza o atendimento na tela.
      */
     setAgendamentos((atual) =>
@@ -867,6 +842,19 @@ export function Agenda() {
     setSelecionado(agendamentoAtualizado);
     setConclusaoAberta(false);
     setSalvandoConclusao(false);
+
+    if (estoqueError) {
+      console.error(
+        "Erro ao registrar saída de estoque:",
+        estoqueError
+      );
+
+      setErro(
+        "Atendimento concluído e financeiro registrado, mas não foi possível registrar o consumo dos produtos no estoque."
+      );
+      return;
+    }
+
     setErro("");
   }
 
