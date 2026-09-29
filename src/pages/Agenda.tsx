@@ -152,6 +152,8 @@ export function Agenda() {
     inicioDoMes(hoje)
   );
   const [calendarioAberto, setCalendarioAberto] = useState(false);
+  const [intervaloInicio, setIntervaloInicio] = useState<string | null>(null);
+  const [intervaloFim, setIntervaloFim] = useState<string | null>(null);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -225,6 +227,21 @@ export function Agenda() {
     (agendamento) => agendamento.status === "concluido"
   ).length;
 
+  function horarioParaMinutos(horario: string) {
+    const [hora, minuto] = horario.slice(0, 5).split(":").map(Number);
+    return hora * 60 + minuto;
+  }
+
+  function estaNoIntervaloAlmoco(horario: string) {
+    if (!intervaloInicio || !intervaloFim) return false;
+
+    const atual = horarioParaMinutos(horario);
+    const inicio = horarioParaMinutos(intervaloInicio);
+    const fim = horarioParaMinutos(intervaloFim);
+
+    return atual >= inicio && atual < fim;
+  }
+
   const horarios = [
     "08:00",
     "09:00",
@@ -242,6 +259,37 @@ export function Agenda() {
   /* =========================
      CARREGAR DADOS
      ========================= */
+
+  async function carregarIntervaloAlmoco() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("horarios_trabalho")
+      .select("intervalo_inicio, intervalo_fim, ativo")
+      .eq("profissional_id", user.id)
+      .eq("dia_semana", dataSelecionada.getDay() === 0 ? 7 : dataSelecionada.getDay())
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao carregar intervalo de almoço:", error);
+      setIntervaloInicio(null);
+      setIntervaloFim(null);
+      return;
+    }
+
+    if (!data?.ativo || !data.intervalo_inicio || !data.intervalo_fim) {
+      setIntervaloInicio(null);
+      setIntervaloFim(null);
+      return;
+    }
+
+    setIntervaloInicio(data.intervalo_inicio.slice(0, 5));
+    setIntervaloFim(data.intervalo_fim.slice(0, 5));
+  }
 
   async function carregarDados() {
     setCarregando(true);
@@ -401,6 +449,10 @@ export function Agenda() {
     carregarDados();
   }, [mesCalendario]);
 
+  useEffect(() => {
+    carregarIntervaloAlmoco();
+  }, [dataSelecionada]);
+
   /* =========================
      ATUALIZAR MODAL
      ========================= */
@@ -547,6 +599,22 @@ export function Agenda() {
     const inicioNovo = minutosDoHorario(horario);
     const fimNovo =
       inicioNovo + Math.max(Number(servicoSelecionado.duracao) || 60, 1);
+
+    if (intervaloInicio && intervaloFim) {
+      const inicioAlmoco = minutosDoHorario(intervaloInicio);
+      const fimAlmoco = minutosDoHorario(intervaloFim);
+
+      const entraNoAlmoco =
+        inicioNovo < fimAlmoco && fimNovo > inicioAlmoco;
+
+      if (entraNoAlmoco) {
+        setErro(
+          `Esse atendimento entra no horário de almoço (${intervaloInicio} às ${intervaloFim}). Escolha outro horário.`
+        );
+        setSalvando(false);
+        return;
+      }
+    }
 
     const horarioEmConflito = agendamentos.some((agendamento) => {
       const servicoExistente = servicos.find(
@@ -1140,6 +1208,8 @@ export function Agenda() {
       ) : (
         <section className="timeline">
           {horarios.map((horarioHora) => {
+            const horarioAlmoco = estaNoIntervaloAlmoco(horarioHora);
+
             const agendamento = agendamentosDoDia.find(
               (item) => item.horario.slice(0, 5) === horarioHora
             );
@@ -1181,6 +1251,19 @@ export function Agenda() {
                 <div className="available occupied-slot" key={horarioHora}>
                   <span>{horarioHora}</span>
                   <b>Ocupado • {servico?.nome ?? "Atendimento"}</b>
+                </div>
+              );
+            }
+
+            if (horarioAlmoco) {
+              return (
+                <div
+                  className="available agenda-lunch"
+                  key={horarioHora}
+                  aria-label="Horário de almoço"
+                >
+                  <span>{horarioHora}</span>
+                  <b>🍽️ Horário de almoço</b>
                 </div>
               );
             }
@@ -1333,7 +1416,9 @@ export function Agenda() {
                       )
                     }
                   >
-                    {horarios.map(
+                    {horarios
+                      .filter((hora) => !estaNoIntervaloAlmoco(hora))
+                      .map(
                       (hora) => (
                         <option
                           key={hora}
