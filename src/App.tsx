@@ -204,10 +204,12 @@ export default function App() {
           <Perfil />
         )}
 
-        <BottomNav
-          page={page}
-          onChange={setPage}
-        />
+        {page !== "perfil" && (
+          <BottomNav
+            page={page}
+            onChange={setPage}
+          />
+        )}
 
       </div>
     </div>

@@ -4,7 +4,6 @@ import {
   Home,
   Sparkles,
   Users,
-  User,
 } from "lucide-react";
 
 import type { ReactNode } from "react";
@@ -18,16 +17,35 @@ export type Page =
   | "perfil";
 
 const items: [Page, string, ReactNode][] = [
-  ["inicio", "Início", <Home />],
-  ["agenda", "Agenda", <CalendarDays />],
+  [
+    "inicio",
+    "Início",
+    <Home />,
+  ],
+
+  [
+    "agenda",
+    "Agenda",
+    <CalendarDays />,
+  ],
+
   [
     "financeiro",
     "Financeiro",
     <ChartNoAxesColumnIncreasing />,
   ],
-  ["servicos", "Serviços", <Sparkles />],
-  ["clientes", "Clientes", <Users />],
-  ["perfil", "Perfil", <User />],
+
+  [
+    "servicos",
+    "Serviços",
+    <Sparkles />,
+  ],
+
+  [
+    "clientes",
+    "Clientes",
+    <Users />,
+  ],
 ];
 
 export function BottomNav({
@@ -41,13 +59,22 @@ export function BottomNav({
     <nav className="bottom-nav">
       {items.map(([id, label, icon]) => (
         <button
-          className={page === id ? "active" : ""}
+          className={
+            page === id
+              ? "active"
+              : ""
+          }
           key={id}
-          onClick={() => onChange(id)}
+          onClick={() =>
+            onChange(id)
+          }
           type="button"
         >
           {icon}
-          <span>{label}</span>
+
+          <span>
+            {label}
+          </span>
         </button>
       ))}
     </nav>

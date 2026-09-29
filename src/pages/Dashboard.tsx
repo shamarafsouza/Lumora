@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import {
   CalendarPlus,
   CalendarDays,
@@ -31,12 +36,22 @@ type Agendamento = {
   servico_id: string;
   data: string;
   horario: string;
-  status: "confirmado" | "pendente" | "concluido" | "cancelado" | string;
+  status:
+    | "confirmado"
+    | "pendente"
+    | "concluido"
+    | "cancelado"
+    | string;
 };
 
 type DashboardProps = {
   onNavigate: (
-    page: "agenda" | "financeiro" | "servicos" | "clientes"
+    page:
+      | "agenda"
+      | "financeiro"
+      | "servicos"
+      | "clientes"
+      | "perfil"
   ) => void;
 };
 
@@ -48,26 +63,40 @@ function formatarMoeda(valor: number) {
 }
 
 function formatarDataCompleta(data: Date) {
-  return data.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  return data.toLocaleDateString(
+    "pt-BR",
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }
+  );
 }
 
 function obterSaudacao() {
-  const hora = new Date().getHours();
+  const hora =
+    new Date().getHours();
 
-  if (hora < 12) return "Bom dia";
-  if (hora < 18) return "Boa tarde";
+  if (hora < 12) {
+    return "Bom dia";
+  }
+
+  if (hora < 18) {
+    return "Boa tarde";
+  }
+
   return "Boa noite";
 }
 
-function formatarHorario(horario: string) {
+function formatarHorario(
+  horario: string
+) {
   return horario.slice(0, 5);
 }
 
-function formatarStatus(status: string) {
+function formatarStatus(
+  status: string
+) {
   switch (status) {
     case "confirmado":
       return "Confirmado";
@@ -86,55 +115,128 @@ function formatarStatus(status: string) {
   }
 }
 
-export function Dashboard({ onNavigate }: DashboardProps) {
-  const [nomeProfissional, setNomeProfissional] = useState("Profissional");
+export function Dashboard({
+  onNavigate,
+}: DashboardProps) {
+  const [
+    nomeProfissional,
+    setNomeProfissional,
+  ] = useState("Profissional");
 
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [servicos, setServicos] = useState<Servico[]>([]);
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [
+    clientes,
+    setClientes,
+  ] = useState<Cliente[]>([]);
 
-  const [receitasMes, setReceitasMes] = useState(0);
-  const [custosMes, setCustosMes] = useState(0);
+  const [
+    servicos,
+    setServicos,
+  ] = useState<Servico[]>([]);
 
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [
+    agendamentos,
+    setAgendamentos,
+  ] = useState<Agendamento[]>([]);
+
+  const [
+    receitasMes,
+    setReceitasMes,
+  ] = useState(0);
+
+  const [
+    custosMes,
+    setCustosMes,
+  ] = useState(0);
+
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(true);
+
+  const [
+    erro,
+    setErro,
+  ] = useState("");
 
   const hoje = useMemo(() => {
     const data = new Date();
 
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const dia = String(data.getDate()).padStart(2, "0");
+    const ano =
+      data.getFullYear();
+
+    const mes = String(
+      data.getMonth() + 1
+    ).padStart(2, "0");
+
+    const dia = String(
+      data.getDate()
+    ).padStart(2, "0");
 
     return `${ano}-${mes}-${dia}`;
   }, []);
 
-  const dataAtual = useMemo(() => new Date(), []);
+  const dataAtual =
+    useMemo(
+      () => new Date(),
+      []
+    );
 
-  const inicioMes = useMemo(() => {
-    const data = new Date();
-    data.setDate(1);
-    data.setHours(0, 0, 0, 0);
-    return data.toISOString();
-  }, []);
+  const inicioMes =
+    useMemo(() => {
+      const data = new Date();
 
-  const inicioProximoMes = useMemo(() => {
-    const data = new Date();
-    data.setMonth(data.getMonth() + 1, 1);
-    data.setHours(0, 0, 0, 0);
-    return data.toISOString();
-  }, []);
+      data.setDate(1);
+      data.setHours(
+        0,
+        0,
+        0,
+        0
+      );
 
-  const inicioMesData = useMemo(() => {
-    const data = new Date();
-    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-01`;
-  }, []);
+      return data.toISOString();
+    }, []);
 
-  const inicioProximoMesData = useMemo(() => {
-    const data = new Date();
-    data.setMonth(data.getMonth() + 1, 1);
-    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-01`;
-  }, []);
+  const inicioProximoMes =
+    useMemo(() => {
+      const data = new Date();
+
+      data.setMonth(
+        data.getMonth() + 1,
+        1
+      );
+
+      data.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      return data.toISOString();
+    }, []);
+
+  const inicioMesData =
+    useMemo(() => {
+      const data = new Date();
+
+      return `${data.getFullYear()}-${String(
+        data.getMonth() + 1
+      ).padStart(2, "0")}-01`;
+    }, []);
+
+  const inicioProximoMesData =
+    useMemo(() => {
+      const data = new Date();
+
+      data.setMonth(
+        data.getMonth() + 1,
+        1
+      );
+
+      return `${data.getFullYear()}-${String(
+        data.getMonth() + 1
+      ).padStart(2, "0")}-01`;
+    }, []);
 
   async function carregarDashboard() {
     setCarregando(true);
@@ -143,20 +245,28 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } =
+        await supabase.auth.getUser();
 
       if (!user) {
-        setErro("Sua sessão expirou. Entre novamente.");
+        setErro(
+          "Sua sessão expirou. Entre novamente."
+        );
+
         return;
       }
 
       const nomeMetadata =
         user.user_metadata?.nome ||
         user.user_metadata?.name ||
-        user.email?.split("@")[0] ||
+        user.email?.split(
+          "@"
+        )[0] ||
         "Profissional";
 
-      setNomeProfissional(nomeMetadata);
+      setNomeProfissional(
+        nomeMetadata
+      );
 
       const [
         clientesResponse,
@@ -168,38 +278,85 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         supabase
           .from("clientes")
           .select("id, nome")
-          .eq("profissional_id", user.id)
-          .order("nome", { ascending: true }),
+          .eq(
+            "profissional_id",
+            user.id
+          )
+          .order("nome", {
+            ascending: true,
+          }),
 
         supabase
           .from("servicos")
-          .select("id, nome, preco")
-          .eq("profissional_id", user.id)
-          .order("nome", { ascending: true }),
+          .select(
+            "id, nome, preco"
+          )
+          .eq(
+            "profissional_id",
+            user.id
+          )
+          .order("nome", {
+            ascending: true,
+          }),
 
         supabase
           .from("agendamentos")
           .select(
             "id, cliente_id, servico_id, data, horario, status"
           )
-          .eq("profissional_id", user.id)
-          .eq("data", hoje)
-          .neq("status", "cancelado")
-          .order("horario", { ascending: true }),
+          .eq(
+            "profissional_id",
+            user.id
+          )
+          .eq(
+            "data",
+            hoje
+          )
+          .neq(
+            "status",
+            "cancelado"
+          )
+          .order("horario", {
+            ascending: true,
+          }),
 
         supabase
-          .from("financeiro_atendimentos")
-          .select("valor_recebido, custo_material, created_at")
-          .eq("profissional_id", user.id)
-          .gte("created_at", inicioMes)
-          .lt("created_at", inicioProximoMes),
+          .from(
+            "financeiro_atendimentos"
+          )
+          .select(
+            "valor_recebido, custo_material, created_at"
+          )
+          .eq(
+            "profissional_id",
+            user.id
+          )
+          .gte(
+            "created_at",
+            inicioMes
+          )
+          .lt(
+            "created_at",
+            inicioProximoMes
+          ),
 
         supabase
           .from("despesas")
-          .select("valor, data")
-          .eq("profissional_id", user.id)
-          .gte("data", inicioMesData)
-          .lt("data", inicioProximoMesData),
+          .select(
+            "valor, data"
+          )
+          .eq(
+            "profissional_id",
+            user.id
+          )
+          .gte(
+            "data",
+            inicioMesData
+          )
+          .lt(
+            "data",
+            inicioProximoMesData
+          ),
       ]);
 
       if (clientesResponse.error) {
@@ -210,41 +367,92 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         throw servicosResponse.error;
       }
 
-      if (agendamentosResponse.error) {
+      if (
+        agendamentosResponse.error
+      ) {
         throw agendamentosResponse.error;
       }
 
-      if (financeiroResponse.error) {
+      if (
+        financeiroResponse.error
+      ) {
         throw financeiroResponse.error;
       }
 
-      if (despesasResponse.error) {
+      if (
+        despesasResponse.error
+      ) {
         throw despesasResponse.error;
       }
 
-      const receitas = (financeiroResponse.data ?? []).reduce(
-        (total, item) => total + Number(item.valor_recebido ?? 0),
-        0
+      const receitas =
+        (
+          financeiroResponse.data ??
+          []
+        ).reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.valor_recebido ??
+                0
+            ),
+          0
+        );
+
+      const materiais =
+        (
+          financeiroResponse.data ??
+          []
+        ).reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.custo_material ??
+                0
+            ),
+          0
+        );
+
+      const despesas =
+        (
+          despesasResponse.data ??
+          []
+        ).reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.valor ?? 0
+            ),
+          0
+        );
+
+      setReceitasMes(
+        receitas
       );
 
-      const materiais = (financeiroResponse.data ?? []).reduce(
-        (total, item) => total + Number(item.custo_material ?? 0),
-        0
+      setCustosMes(
+        materiais + despesas
       );
 
-      const despesas = (despesasResponse.data ?? []).reduce(
-        (total, item) => total + Number(item.valor ?? 0),
-        0
+      setClientes(
+        clientesResponse.data ??
+          []
       );
 
-      setReceitasMes(receitas);
-      setCustosMes(materiais + despesas);
+      setServicos(
+        servicosResponse.data ??
+          []
+      );
 
-      setClientes(clientesResponse.data ?? []);
-      setServicos(servicosResponse.data ?? []);
-      setAgendamentos(agendamentosResponse.data ?? []);
+      setAgendamentos(
+        agendamentosResponse.data ??
+          []
+      );
     } catch (error) {
-      console.error("Erro ao carregar dashboard:", error);
+      console.error(
+        "Erro ao carregar dashboard:",
+        error
+      );
 
       setErro(
         "Não foi possível carregar os dados do seu dashboard."
@@ -258,74 +466,144 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     carregarDashboard();
   }, []);
 
-  const clientesMap = useMemo(() => {
-    const mapa = new Map<string, Cliente>();
+  const clientesMap =
+    useMemo(() => {
+      const mapa =
+        new Map<
+          string,
+          Cliente
+        >();
 
-    clientes.forEach((cliente) => {
-      mapa.set(cliente.id, cliente);
-    });
+      clientes.forEach(
+        (cliente) => {
+          mapa.set(
+            cliente.id,
+            cliente
+          );
+        }
+      );
 
-    return mapa;
-  }, [clientes]);
+      return mapa;
+    }, [clientes]);
 
-  const servicosMap = useMemo(() => {
-    const mapa = new Map<string, Servico>();
+  const servicosMap =
+    useMemo(() => {
+      const mapa =
+        new Map<
+          string,
+          Servico
+        >();
 
-    servicos.forEach((servico) => {
-      mapa.set(servico.id, servico);
-    });
+      servicos.forEach(
+        (servico) => {
+          mapa.set(
+            servico.id,
+            servico
+          );
+        }
+      );
 
-    return mapa;
-  }, [servicos]);
+      return mapa;
+    }, [servicos]);
 
-  const proximosAtendimentos = useMemo(() => {
-    return agendamentos.filter(
-      (agendamento) => agendamento.status !== "concluido"
-    );
-  }, [agendamentos]);
-
-  const proximoAtendimento = proximosAtendimentos[0];
-
-  const faturamentoPrevisto = useMemo(() => {
-    return agendamentos
-      .filter(
+  const proximosAtendimentos =
+    useMemo(() => {
+      return agendamentos.filter(
         (agendamento) =>
-          agendamento.status === "confirmado" ||
-          agendamento.status === "pendente"
-      )
-      .reduce((total, agendamento) => {
-        const servico = servicosMap.get(agendamento.servico_id);
+          agendamento.status !==
+          "concluido"
+      );
+    }, [agendamentos]);
 
-        return total + Number(servico?.preco ?? 0);
-      }, 0);
-  }, [agendamentos, servicosMap]);
+  const proximoAtendimento =
+    proximosAtendimentos[0];
 
-  const resultadoMes = receitasMes - custosMes;
+  const faturamentoPrevisto =
+    useMemo(() => {
+      return agendamentos
+        .filter(
+          (agendamento) =>
+            agendamento.status ===
+              "confirmado" ||
+            agendamento.status ===
+              "pendente"
+        )
+        .reduce(
+          (
+            total,
+            agendamento
+          ) => {
+            const servico =
+              servicosMap.get(
+                agendamento.servico_id
+              );
+
+            return (
+              total +
+              Number(
+                servico?.preco ??
+                  0
+              )
+            );
+          },
+          0
+        );
+    }, [
+      agendamentos,
+      servicosMap,
+    ]);
+
+  const resultadoMes =
+    receitasMes -
+    custosMes;
 
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
         <div>
-          <span className="dashboard-brand">LUMORA</span>
+          <span className="dashboard-brand">
+            LUMORA
+          </span>
 
           <h1>
             {obterSaudacao()},{" "}
-            <strong>{nomeProfissional}</strong> ✨
+            <strong>
+              {nomeProfissional}
+            </strong>{" "}
+            ✨
           </h1>
 
-          <p>{formatarDataCompleta(dataAtual)}</p>
+          <p>
+            {formatarDataCompleta(
+              dataAtual
+            )}
+          </p>
         </div>
 
-        <div className="dashboard-avatar">
-          {nomeProfissional.charAt(0).toUpperCase()}
-        </div>
+        <button
+          type="button"
+          className="dashboard-avatar dashboard-avatar-button"
+          onClick={() =>
+            onNavigate("perfil")
+          }
+          aria-label="Abrir perfil"
+          title="Meu perfil"
+        >
+          {nomeProfissional
+            .charAt(0)
+            .toUpperCase()}
+        </button>
       </header>
 
       {erro && (
         <div className="dashboard-error">
           <span>{erro}</span>
 
-          <button onClick={carregarDashboard}>
+          <button
+            onClick={
+              carregarDashboard
+            }
+          >
             Tentar novamente
           </button>
         </div>
@@ -333,9 +611,14 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
       {carregando ? (
         <div className="dashboard-loading">
-          <LoaderCircle className="spin" size={25} />
+          <LoaderCircle
+            className="spin"
+            size={25}
+          />
 
-          <span>Carregando seu dia...</span>
+          <span>
+            Carregando seu dia...
+          </span>
         </div>
       ) : (
         <>
@@ -346,25 +629,39 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   SEU DIA
                 </span>
 
-                <h2>Próximo atendimento</h2>
+                <h2>
+                  Próximo atendimento
+                </h2>
               </div>
 
               <button
                 className="section-link"
-                onClick={() => onNavigate("agenda")}
+                onClick={() =>
+                  onNavigate(
+                    "agenda"
+                  )
+                }
               >
                 Ver agenda
-                <ChevronRight size={15} />
+                <ChevronRight
+                  size={15}
+                />
               </button>
             </div>
 
             {proximoAtendimento ? (
               <button
                 className="next-appointment"
-                onClick={() => onNavigate("agenda")}
+                onClick={() =>
+                  onNavigate(
+                    "agenda"
+                  )
+                }
               >
                 <div className="next-time">
-                  <Clock3 size={16} />
+                  <Clock3
+                    size={16}
+                  />
 
                   <strong>
                     {formatarHorario(
@@ -402,10 +699,16 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             ) : (
               <button
                 className="next-empty"
-                onClick={() => onNavigate("agenda")}
+                onClick={() =>
+                  onNavigate(
+                    "agenda"
+                  )
+                }
               >
                 <div className="empty-icon">
-                  <CalendarDays size={22} />
+                  <CalendarDays
+                    size={22}
+                  />
                 </div>
 
                 <div>
@@ -418,7 +721,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   </span>
                 </div>
 
-                <ChevronRight size={18} />
+                <ChevronRight
+                  size={18}
+                />
               </button>
             )}
           </section>
@@ -426,7 +731,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <section className="dashboard-metrics">
             <div className="dashboard-metric">
               <div className="metric-icon wine">
-                <CalendarDays size={18} />
+                <CalendarDays
+                  size={18}
+                />
               </div>
 
               <span>Hoje</span>
@@ -436,7 +743,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </strong>
 
               <small>
-                {agendamentos.length === 1
+                {agendamentos.length ===
+                1
                   ? "atendimento"
                   : "atendimentos"}
               </small>
@@ -444,16 +752,24 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
             <div className="dashboard-metric">
               <div className="metric-icon green">
-                <ChartNoAxesColumnIncreasing size={18} />
+                <ChartNoAxesColumnIncreasing
+                  size={18}
+                />
               </div>
 
-              <span>Previsto hoje</span>
+              <span>
+                Previsto hoje
+              </span>
 
               <strong className="metric-money">
-                {formatarMoeda(faturamentoPrevisto)}
+                {formatarMoeda(
+                  faturamentoPrevisto
+                )}
               </strong>
 
-              <small>faturamento</small>
+              <small>
+                faturamento
+              </small>
             </div>
           </section>
 
@@ -464,32 +780,61 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   ESTE MÊS
                 </span>
 
-                <h2>Visão financeira</h2>
+                <h2>
+                  Visão financeira
+                </h2>
               </div>
 
               <button
                 className="section-link"
-                onClick={() => onNavigate("financeiro")}
+                onClick={() =>
+                  onNavigate(
+                    "financeiro"
+                  )
+                }
               >
                 Ver financeiro
-                <ChevronRight size={15} />
+                <ChevronRight
+                  size={15}
+                />
               </button>
             </div>
 
             <div className="dashboard-finance-grid">
               <div className="dashboard-finance-card">
-                <span>Receitas</span>
-                <strong>{formatarMoeda(receitasMes)}</strong>
+                <span>
+                  Receitas
+                </span>
+
+                <strong>
+                  {formatarMoeda(
+                    receitasMes
+                  )}
+                </strong>
               </div>
 
               <div className="dashboard-finance-card">
-                <span>Custos</span>
-                <strong>{formatarMoeda(custosMes)}</strong>
+                <span>
+                  Custos
+                </span>
+
+                <strong>
+                  {formatarMoeda(
+                    custosMes
+                  )}
+                </strong>
               </div>
 
               <div className="dashboard-finance-card destaque">
-                <span>Resultado</span>
-                <strong>{formatarMoeda(resultadoMes)}</strong>
+                <span>
+                  Resultado
+                </span>
+
+                <strong>
+                  {formatarMoeda(
+                    resultadoMes
+                  )}
+                </strong>
               </div>
             </div>
           </section>
@@ -501,69 +846,111 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   ACESSO RÁPIDO
                 </span>
 
-                <h2>O que você precisa?</h2>
+                <h2>
+                  O que você precisa?
+                </h2>
               </div>
             </div>
 
             <div className="quick-actions">
               <button
-                onClick={() => onNavigate("agenda")}
+                onClick={() =>
+                  onNavigate(
+                    "agenda"
+                  )
+                }
               >
                 <div className="quick-icon wine">
-                  <CalendarPlus size={20} />
+                  <CalendarPlus
+                    size={20}
+                  />
                 </div>
 
                 <span>
                   Novo
-                  <strong>atendimento</strong>
+                  <strong>
+                    atendimento
+                  </strong>
                 </span>
 
-                <ChevronRight size={16} />
+                <ChevronRight
+                  size={16}
+                />
               </button>
 
               <button
-                onClick={() => onNavigate("clientes")}
+                onClick={() =>
+                  onNavigate(
+                    "clientes"
+                  )
+                }
               >
                 <div className="quick-icon beige">
-                  <Users size={20} />
+                  <Users
+                    size={20}
+                  />
                 </div>
 
                 <span>
                   Gerenciar
-                  <strong>clientes</strong>
+                  <strong>
+                    clientes
+                  </strong>
                 </span>
 
-                <ChevronRight size={16} />
+                <ChevronRight
+                  size={16}
+                />
               </button>
 
               <button
-                onClick={() => onNavigate("servicos")}
+                onClick={() =>
+                  onNavigate(
+                    "servicos"
+                  )
+                }
               >
                 <div className="quick-icon gold">
-                  <Sparkles size={20} />
+                  <Sparkles
+                    size={20}
+                  />
                 </div>
 
                 <span>
                   Gerenciar
-                  <strong>serviços</strong>
+                  <strong>
+                    serviços
+                  </strong>
                 </span>
 
-                <ChevronRight size={16} />
+                <ChevronRight
+                  size={16}
+                />
               </button>
 
               <button
-                onClick={() => onNavigate("financeiro")}
+                onClick={() =>
+                  onNavigate(
+                    "financeiro"
+                  )
+                }
               >
                 <div className="quick-icon green">
-                  <ChartNoAxesColumnIncreasing size={20} />
+                  <ChartNoAxesColumnIncreasing
+                    size={20}
+                  />
                 </div>
 
                 <span>
                   Ver
-                  <strong>financeiro</strong>
+                  <strong>
+                    financeiro
+                  </strong>
                 </span>
 
-                <ChevronRight size={16} />
+                <ChevronRight
+                  size={16}
+                />
               </button>
             </div>
           </section>
@@ -575,7 +962,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   AGENDA DE HOJE
                 </span>
 
-                <h2>Seus atendimentos</h2>
+                <h2>
+                  Seus atendimentos
+                </h2>
               </div>
 
               <span className="today-count">
@@ -583,85 +972,109 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </span>
             </div>
 
-            {agendamentos.length === 0 ? (
+            {agendamentos.length ===
+            0 ? (
               <div className="today-empty">
-                <CalendarDays size={20} />
+                <CalendarDays
+                  size={20}
+                />
 
                 <span>
-                  Você ainda não possui atendimentos
-                  agendados para hoje.
+                  Você ainda não possui
+                  atendimentos agendados
+                  para hoje.
                 </span>
               </div>
             ) : (
               <div className="today-list">
-                {agendamentos.slice(0, 5).map((agendamento) => {
-                  const cliente = clientesMap.get(
-                    agendamento.cliente_id
-                  );
+                {agendamentos
+                  .slice(0, 5)
+                  .map(
+                    (
+                      agendamento
+                    ) => {
+                      const cliente =
+                        clientesMap.get(
+                          agendamento.cliente_id
+                        );
 
-                  const servico = servicosMap.get(
-                    agendamento.servico_id
-                  );
+                      const servico =
+                        servicosMap.get(
+                          agendamento.servico_id
+                        );
 
-                  return (
-                    <button
-                      className="today-card"
-                      key={agendamento.id}
-                      onClick={() =>
-                        onNavigate("agenda")
-                      }
-                    >
-                      <span className="today-time">
-                        {formatarHorario(
-                          agendamento.horario
-                        )}
-                      </span>
-
-                      <div className="today-client">
-                        <strong>
-                          {cliente?.nome ||
-                            "Cliente"}
-                        </strong>
-
-                        <span>
-                          {servico?.nome ||
-                            "Serviço"}
-                        </span>
-                      </div>
-
-                      <div className="today-price">
-                        <strong>
-                          {formatarMoeda(
-                            Number(servico?.preco ?? 0)
-                          )}
-                        </strong>
-
-                        <small
-                          className={
-                            agendamento.status
+                      return (
+                        <button
+                          className="today-card"
+                          key={
+                            agendamento.id
+                          }
+                          onClick={() =>
+                            onNavigate(
+                              "agenda"
+                            )
                           }
                         >
-                          {formatarStatus(
-                            agendamento.status
-                          )}
-                        </small>
-                      </div>
-                    </button>
-                  );
-                })}
+                          <span className="today-time">
+                            {formatarHorario(
+                              agendamento.horario
+                            )}
+                          </span>
+
+                          <div className="today-client">
+                            <strong>
+                              {cliente?.nome ||
+                                "Cliente"}
+                            </strong>
+
+                            <span>
+                              {servico?.nome ||
+                                "Serviço"}
+                            </span>
+                          </div>
+
+                          <div className="today-price">
+                            <strong>
+                              {formatarMoeda(
+                                Number(
+                                  servico?.preco ??
+                                    0
+                                )
+                              )}
+                            </strong>
+
+                            <small
+                              className={
+                                agendamento.status
+                              }
+                            >
+                              {formatarStatus(
+                                agendamento.status
+                              )}
+                            </small>
+                          </div>
+                        </button>
+                      );
+                    }
+                  )}
               </div>
             )}
           </section>
 
           <section className="dashboard-summary">
             <div>
-              <Users size={18} />
+              <Users
+                size={18}
+              />
 
               <div>
-                <strong>{clientes.length}</strong>
+                <strong>
+                  {clientes.length}
+                </strong>
 
                 <span>
-                  {clientes.length === 1
+                  {clientes.length ===
+                  1
                     ? "cliente cadastrado"
                     : "clientes cadastrados"}
                 </span>
@@ -669,13 +1082,18 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             </div>
 
             <div>
-              <Sparkles size={18} />
+              <Sparkles
+                size={18}
+              />
 
               <div>
-                <strong>{servicos.length}</strong>
+                <strong>
+                  {servicos.length}
+                </strong>
 
                 <span>
-                  {servicos.length === 1
+                  {servicos.length ===
+                  1
                     ? "serviço cadastrado"
                     : "serviços cadastrados"}
                 </span>
