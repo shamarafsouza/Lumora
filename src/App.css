@@ -2156,3 +2156,23 @@ body {
   border-color: transparent;
   font-size: 11px;
 }
+
+/* =========================
+   INTERVALO DE ALMOÇO
+   ========================= */
+
+.agenda-lunch {
+  min-height: 48px;
+  background: #f6eedf;
+  border: 1px solid #ead8b8;
+  color: #8b6b36;
+}
+
+.agenda-lunch b {
+  font-weight: 600;
+  color: #8b6b36;
+}
+
+.agenda-lunch span {
+  color: #9a8057;
+}
