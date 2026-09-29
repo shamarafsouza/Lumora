@@ -12,6 +12,7 @@ import { Agenda } from "./pages/Agenda";
 import Financeiro from "./pages/Financeiro";
 import { Servicos } from "./pages/Servicos";
 import { Clientes } from "./pages/Clientes";
+import Perfil from "./pages/Perfil";
 
 import { Inicio } from "./pages/Inicio";
 import { Login } from "./pages/Login";
@@ -61,7 +62,9 @@ export default function App() {
         setTela("app");
 
         const paginaSalva =
-          localStorage.getItem("lumora-pagina") as Page | null;
+          localStorage.getItem(
+            "lumora-pagina"
+          ) as Page | null;
 
         setPage(paginaSalva || "inicio");
       }
@@ -79,7 +82,9 @@ export default function App() {
           setTela("app");
 
           const paginaSalva =
-            localStorage.getItem("lumora-pagina") as Page | null;
+            localStorage.getItem(
+              "lumora-pagina"
+            ) as Page | null;
 
           setPage(paginaSalva || "inicio");
         } else {
@@ -144,9 +149,13 @@ export default function App() {
               setTela("app");
 
               const paginaSalva =
-                localStorage.getItem("lumora-pagina") as Page | null;
+                localStorage.getItem(
+                  "lumora-pagina"
+                ) as Page | null;
 
-              setPage(paginaSalva || "inicio");
+              setPage(
+                paginaSalva || "inicio"
+              );
             }}
           />
         </div>
@@ -160,6 +169,7 @@ export default function App() {
       | "financeiro"
       | "servicos"
       | "clientes"
+      | "perfil"
   ) {
     setPage(novaPagina);
   }
@@ -188,6 +198,10 @@ export default function App() {
 
         {page === "clientes" && (
           <Clientes />
+        )}
+
+        {page === "perfil" && (
+          <Perfil />
         )}
 
         <BottomNav
