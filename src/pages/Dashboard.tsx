@@ -93,6 +93,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
 
+  const [receitasMes, setReceitasMes] = useState(0);
+  const [custosMes, setCustosMes] = useState(0);
+
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
@@ -107,6 +110,31 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   }, []);
 
   const dataAtual = useMemo(() => new Date(), []);
+
+  const inicioMes = useMemo(() => {
+    const data = new Date();
+    data.setDate(1);
+    data.setHours(0, 0, 0, 0);
+    return data.toISOString();
+  }, []);
+
+  const inicioProximoMes = useMemo(() => {
+    const data = new Date();
+    data.setMonth(data.getMonth() + 1, 1);
+    data.setHours(0, 0, 0, 0);
+    return data.toISOString();
+  }, []);
+
+  const inicioMesData = useMemo(() => {
+    const data = new Date();
+    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-01`;
+  }, []);
+
+  const inicioProximoMesData = useMemo(() => {
+    const data = new Date();
+    data.setMonth(data.getMonth() + 1, 1);
+    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-01`;
+  }, []);
 
   async function carregarDashboard() {
     setCarregando(true);
@@ -134,6 +162,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         clientesResponse,
         servicosResponse,
         agendamentosResponse,
+        financeiroResponse,
+        despesasResponse,
       ] = await Promise.all([
         supabase
           .from("clientes")
@@ -156,6 +186,20 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           .eq("data", hoje)
           .neq("status", "cancelado")
           .order("horario", { ascending: true }),
+
+        supabase
+          .from("financeiro_atendimentos")
+          .select("valor_recebido, custo_material, created_at")
+          .eq("profissional_id", user.id)
+          .gte("created_at", inicioMes)
+          .lt("created_at", inicioProximoMes),
+
+        supabase
+          .from("despesas")
+          .select("valor, data")
+          .eq("profissional_id", user.id)
+          .gte("data", inicioMesData)
+          .lt("data", inicioProximoMesData),
       ]);
 
       if (clientesResponse.error) {
@@ -169,6 +213,32 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       if (agendamentosResponse.error) {
         throw agendamentosResponse.error;
       }
+
+      if (financeiroResponse.error) {
+        throw financeiroResponse.error;
+      }
+
+      if (despesasResponse.error) {
+        throw despesasResponse.error;
+      }
+
+      const receitas = (financeiroResponse.data ?? []).reduce(
+        (total, item) => total + Number(item.valor_recebido ?? 0),
+        0
+      );
+
+      const materiais = (financeiroResponse.data ?? []).reduce(
+        (total, item) => total + Number(item.custo_material ?? 0),
+        0
+      );
+
+      const despesas = (despesasResponse.data ?? []).reduce(
+        (total, item) => total + Number(item.valor ?? 0),
+        0
+      );
+
+      setReceitasMes(receitas);
+      setCustosMes(materiais + despesas);
 
       setClientes(clientesResponse.data ?? []);
       setServicos(servicosResponse.data ?? []);
@@ -229,6 +299,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         return total + Number(servico?.preco ?? 0);
       }, 0);
   }, [agendamentos, servicosMap]);
+
+  const resultadoMes = receitasMes - custosMes;
 
   return (
     <main className="dashboard-page">
@@ -382,6 +454,43 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </strong>
 
               <small>faturamento</small>
+            </div>
+          </section>
+
+          <section className="dashboard-finance">
+            <div className="section-heading">
+              <div>
+                <span className="section-eyebrow">
+                  ESTE MÊS
+                </span>
+
+                <h2>Visão financeira</h2>
+              </div>
+
+              <button
+                className="section-link"
+                onClick={() => onNavigate("financeiro")}
+              >
+                Ver financeiro
+                <ChevronRight size={15} />
+              </button>
+            </div>
+
+            <div className="dashboard-finance-grid">
+              <div className="dashboard-finance-card">
+                <span>Receitas</span>
+                <strong>{formatarMoeda(receitasMes)}</strong>
+              </div>
+
+              <div className="dashboard-finance-card">
+                <span>Custos</span>
+                <strong>{formatarMoeda(custosMes)}</strong>
+              </div>
+
+              <div className="dashboard-finance-card destaque">
+                <span>Resultado</span>
+                <strong>{formatarMoeda(resultadoMes)}</strong>
+              </div>
             </div>
           </section>
 
