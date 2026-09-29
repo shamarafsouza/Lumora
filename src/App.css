@@ -97,7 +97,6 @@ body {
 .agenda-calendar-title strong {
   color: var(--wine-dark);
   font: 600 15px 'Playfair Display', serif;
-  text-transform: capitalize;
 }
 
 .agenda-calendar-controls {
@@ -2097,4 +2096,63 @@ body {
 .service-products-empty svg {
   flex-shrink: 0;
   color: var(--gold);
+}
+
+/* =========================
+   CALENDÁRIO COMPACTO
+   ========================= */
+
+.calendar-toggle {
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 0 1px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calendar-toggle:hover {
+  color: var(--wine-dark);
+}
+
+.agenda-resumo {
+  margin: 0 2px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Atendimento concluído legível */
+.appointment.concluido {
+  background: #e7f3ed;
+  color: #1f6b50;
+  box-shadow: none;
+}
+
+.appointment.concluido .slot-time,
+.appointment.concluido small {
+  color: #2d8565;
+  opacity: 1;
+}
+
+.appointment.concluido em {
+  background: #2d85651f;
+  color: #2d8565;
+}
+
+/* Horário ocupado mais discreto */
+.occupied-slot {
+  height: 36px;
+  background: #f6eeeb;
+  border-style: solid;
+  border-color: transparent;
+  font-size: 11px;
 }
