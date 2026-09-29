@@ -590,3 +590,72 @@
     transform: rotate(360deg);
   }
 }
+
+
+/* =========================
+   VISÃO FINANCEIRA
+   ========================= */
+
+.dashboard-finance {
+  margin-bottom: 26px;
+}
+
+.dashboard-finance .section-heading {
+  margin-bottom: 12px;
+}
+
+.dashboard-finance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard-finance-card {
+  min-width: 0;
+  min-height: 78px;
+  padding: 11px 10px;
+  box-sizing: border-box;
+  border: 1px solid #eee1dd;
+  border-radius: 13px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 3px 12px #6b304008;
+}
+
+.dashboard-finance-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.dashboard-finance-card strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--wine-dark);
+  font: 700 13px "Playfair Display", serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-finance-card.destaque {
+  background: #f8efec;
+  border-color: #ead5dc;
+}
+
+.dashboard-finance-card.destaque strong {
+  color: var(--green);
+}
+
+@media (max-width: 360px) {
+  .dashboard-finance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-finance-card {
+    min-height: 64px;
+  }
+}
