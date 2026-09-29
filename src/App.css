@@ -958,12 +958,12 @@ body {
    ========================= */
 
 .bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(430px, 100%);
+  left: 0;
+  width: 100%;
   height: 76px;
+  box-sizing: border-box;
   background: #fff;
   border-top: 1px solid var(--line);
   display: grid;
@@ -2366,9 +2366,10 @@ body {
 
 .perfil-page {
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 32px;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 20px 22px 100px;
   color: #3f2933;
 }
 
@@ -2834,4 +2835,59 @@ body {
 .dashboard-avatar-button:focus-visible {
   outline: 2px solid var(--wine);
   outline-offset: 3px;
+}
+
+/* =========================================================
+   LUMORA — SHELL MOBILE
+   No desktop, o app continua sendo exibido como um celular.
+   ========================================================= */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  background: #21151d;
+}
+
+.mobile-shell {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: var(--cream);
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.mobile-shell .bottom-nav {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  box-sizing: border-box;
+}
+
+@media (max-width: 430px) {
+  .app {
+    background: var(--cream);
+  }
+
+  .mobile-shell {
+    max-width: none;
+  }
 }
