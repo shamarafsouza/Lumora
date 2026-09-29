@@ -2801,3 +2801,12 @@ body {
     width: 100%;
   }
 }
+.perfil-instagram-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  color: #997d88;
+  font-size: 15px;
+  font-weight: 700;
+}

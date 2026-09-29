@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Instagram,
   MapPin,
   Phone,
   Save,
@@ -26,7 +25,10 @@ type ConfiguracaoNegocio = {
   cor_principal: string;
 };
 
-const configuracaoInicial: Omit<ConfiguracaoNegocio, "profissional_id"> = {
+const configuracaoInicial: Omit<
+  ConfiguracaoNegocio,
+  "profissional_id"
+> = {
   nome_negocio: "",
   nome_profissional: "",
   telefone: "",
@@ -70,14 +72,14 @@ export default function Perfil() {
     setUsuarioId(user.id);
     setEmail(user.email ?? "");
 
-    // Busca o perfil básico
+    // Dados básicos da conta
     const { data: perfil } = await supabase
       .from("profiles")
       .select("nome, telefone")
       .eq("id", user.id)
       .maybeSingle();
 
-    // Busca as configurações do negócio
+    // Dados personalizados do negócio
     const { data: negocio, error: erroNegocio } = await supabase
       .from("configuracoes_negocio")
       .select("*")
@@ -85,6 +87,7 @@ export default function Perfil() {
       .maybeSingle();
 
     if (erroNegocio) {
+      console.error(erroNegocio);
       setErro("Não foi possível carregar os dados do negócio.");
       setCarregando(false);
       return;
@@ -152,14 +155,18 @@ export default function Perfil() {
       return;
     }
 
-    // Mantém os dados básicos sincronizados com profiles
-    await supabase
+    // Mantém nome e telefone sincronizados com o perfil da conta
+    const { error: erroPerfil } = await supabase
       .from("profiles")
       .update({
         nome: config.nome_profissional.trim(),
         telefone: config.telefone.trim(),
       })
       .eq("id", usuarioId);
+
+    if (erroPerfil) {
+      console.error(erroPerfil);
+    }
 
     setMensagem("Perfil atualizado com sucesso.");
     setSalvando(false);
@@ -186,10 +193,15 @@ export default function Perfil() {
     <main className="perfil-page">
       <div className="perfil-header">
         <div>
-          <span className="perfil-eyebrow">MEU NEGÓCIO</span>
+          <span className="perfil-eyebrow">
+            MEU NEGÓCIO
+          </span>
+
           <h1>Perfil</h1>
+
           <p>
-            Personalize as informações que representam o seu negócio.
+            Personalize as informações que representam o
+            seu negócio.
           </p>
         </div>
       </div>
@@ -207,7 +219,7 @@ export default function Perfil() {
       )}
 
       <div className="perfil-layout">
-        {/* IDENTIDADE */}
+        {/* IDENTIDADE DO NEGÓCIO */}
         <section className="perfil-card perfil-identidade">
           <div className="perfil-card-header">
             <div className="perfil-card-icon">
@@ -216,12 +228,15 @@ export default function Perfil() {
 
             <div>
               <h2>Identidade do negócio</h2>
+
               <p>
-                Essas informações ajudam a apresentar sua marca.
+                Essas informações ajudam a apresentar
+                sua marca.
               </p>
             </div>
           </div>
 
+          {/* LOGO */}
           <div className="perfil-logo-area">
             <div
               className="perfil-logo-preview"
@@ -244,32 +259,43 @@ export default function Perfil() {
 
             <div className="perfil-logo-info">
               <strong>Logo do negócio</strong>
+
               <span>
-                Por enquanto você pode informar a URL da sua imagem.
+                Informe a URL da imagem da sua logo
+                abaixo.
               </span>
             </div>
           </div>
 
           <div className="perfil-form-grid">
+            {/* NOME DO NEGÓCIO */}
             <label className="perfil-field perfil-field-full">
               <span>Nome do negócio</span>
+
               <div className="perfil-input-icon">
                 <Building2 size={17} />
+
                 <input
                   type="text"
                   value={config.nome_negocio}
                   onChange={(e) =>
-                    atualizarCampo("nome_negocio", e.target.value)
+                    atualizarCampo(
+                      "nome_negocio",
+                      e.target.value
+                    )
                   }
                   placeholder="Ex.: Studio Shamara"
                 />
               </div>
             </label>
 
+            {/* NOME DA PROFISSIONAL */}
             <label className="perfil-field">
               <span>Seu nome</span>
+
               <div className="perfil-input-icon">
                 <User size={17} />
+
                 <input
                   type="text"
                   value={config.nome_profissional}
@@ -284,74 +310,106 @@ export default function Perfil() {
               </div>
             </label>
 
+            {/* TELEFONE */}
             <label className="perfil-field">
               <span>Telefone / WhatsApp</span>
+
               <div className="perfil-input-icon">
                 <Phone size={17} />
+
                 <input
                   type="tel"
                   value={config.telefone}
                   onChange={(e) =>
-                    atualizarCampo("telefone", e.target.value)
+                    atualizarCampo(
+                      "telefone",
+                      e.target.value
+                    )
                   }
                   placeholder="(27) 99999-9999"
                 />
               </div>
             </label>
 
+            {/* INSTAGRAM */}
             <label className="perfil-field">
               <span>Instagram</span>
+
               <div className="perfil-input-icon">
-                <Instagram size={17} />
+                <span className="perfil-instagram-icon">
+                  @
+                </span>
+
                 <input
                   type="text"
                   value={config.instagram}
                   onChange={(e) =>
-                    atualizarCampo("instagram", e.target.value)
+                    atualizarCampo(
+                      "instagram",
+                      e.target.value
+                    )
                   }
                   placeholder="@seunegocio"
                 />
               </div>
             </label>
 
+            {/* CIDADE */}
             <label className="perfil-field">
               <span>Cidade</span>
+
               <div className="perfil-input-icon">
                 <MapPin size={17} />
+
                 <input
                   type="text"
                   value={config.cidade}
                   onChange={(e) =>
-                    atualizarCampo("cidade", e.target.value)
+                    atualizarCampo(
+                      "cidade",
+                      e.target.value
+                    )
                   }
                   placeholder="Sua cidade"
                 />
               </div>
             </label>
 
+            {/* ENDEREÇO */}
             <label className="perfil-field perfil-field-full">
               <span>Endereço</span>
+
               <div className="perfil-input-icon">
                 <MapPin size={17} />
+
                 <input
                   type="text"
                   value={config.endereco}
                   onChange={(e) =>
-                    atualizarCampo("endereco", e.target.value)
+                    atualizarCampo(
+                      "endereco",
+                      e.target.value
+                    )
                   }
                   placeholder="Rua, número, bairro..."
                 />
               </div>
             </label>
 
+            {/* DESCRIÇÃO */}
             <label className="perfil-field perfil-field-full">
               <span>Descrição do negócio</span>
+
               <div className="perfil-textarea-wrapper">
                 <FileText size={17} />
+
                 <textarea
                   value={config.descricao}
                   onChange={(e) =>
-                    atualizarCampo("descricao", e.target.value)
+                    atualizarCampo(
+                      "descricao",
+                      e.target.value
+                    )
                   }
                   placeholder="Conte um pouco sobre seu espaço e seu trabalho..."
                   rows={4}
@@ -359,14 +417,19 @@ export default function Perfil() {
               </div>
             </label>
 
+            {/* LOGO URL */}
             <label className="perfil-field perfil-field-full">
               <span>URL da logo</span>
+
               <input
                 className="perfil-input"
                 type="url"
                 value={config.logo_url}
                 onChange={(e) =>
-                  atualizarCampo("logo_url", e.target.value)
+                  atualizarCampo(
+                    "logo_url",
+                    e.target.value
+                  )
                 }
                 placeholder="https://..."
               />
@@ -383,8 +446,10 @@ export default function Perfil() {
 
             <div>
               <h2>Personalização</h2>
+
               <p>
-                Escolha a cor principal usada na identidade do negócio.
+                Escolha a cor principal usada na
+                identidade do negócio.
               </p>
             </div>
           </div>
@@ -393,7 +458,8 @@ export default function Perfil() {
             <div
               className="perfil-color-preview"
               style={{
-                backgroundColor: config.cor_principal,
+                backgroundColor:
+                  config.cor_principal,
               }}
             />
 
@@ -437,14 +503,20 @@ export default function Perfil() {
 
             <div>
               <h2>Conta</h2>
-              <p>Informações da sua conta Lumora.</p>
+
+              <p>
+                Informações da sua conta Lumora.
+              </p>
             </div>
           </div>
 
           <div className="perfil-conta">
             <div>
               <span>E-mail</span>
-              <strong>{email || "Não informado"}</strong>
+
+              <strong>
+                {email || "Não informado"}
+              </strong>
             </div>
 
             <button
@@ -453,12 +525,14 @@ export default function Perfil() {
               onClick={sair}
             >
               <LogOut size={17} />
+
               Sair da conta
             </button>
           </div>
         </section>
       </div>
 
+      {/* SALVAR */}
       <div className="perfil-footer">
         <button
           type="button"
