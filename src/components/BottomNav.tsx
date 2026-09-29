@@ -4,6 +4,7 @@ import {
   Home,
   Sparkles,
   Users,
+  User,
 } from "lucide-react";
 
 import type { ReactNode } from "react";
@@ -13,7 +14,8 @@ export type Page =
   | "agenda"
   | "financeiro"
   | "servicos"
-  | "clientes";
+  | "clientes"
+  | "perfil";
 
 const items: [Page, string, ReactNode][] = [
   ["inicio", "Início", <Home />],
@@ -25,6 +27,7 @@ const items: [Page, string, ReactNode][] = [
   ],
   ["servicos", "Serviços", <Sparkles />],
   ["clientes", "Clientes", <Users />],
+  ["perfil", "Perfil", <User />],
 ];
 
 export function BottomNav({
