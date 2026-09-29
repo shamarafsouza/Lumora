@@ -2176,3 +2176,190 @@ body {
 .agenda-lunch span {
   color: #9a8057;
 }
+
+/* =========================
+   FINANCEIRO - MOVIMENTAÇÕES
+   ========================= */
+
+.financeiro-botoes button:last-child {
+  grid-column: 1 / -1;
+}
+
+.financeiro-abas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  background: #f3e9e5;
+  border-radius: 12px;
+}
+
+.financeiro-abas button {
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.financeiro-abas button.ativa {
+  background: #fff;
+  color: var(--wine);
+  box-shadow: 0 2px 8px #6b30400f;
+}
+
+.financeiro-lancamento {
+  justify-content: flex-start;
+}
+
+.mov-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.financeiro-lancamento .financeiro-valores {
+  margin-left: auto;
+}
+
+.mov-icone {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.mov-icone.entrada {
+  background: #e7f3ed;
+  color: var(--green);
+}
+
+.mov-icone.saida {
+  background: #f8e9ed;
+  color: var(--wine);
+}
+
+/* =========================
+   FINANCEIRO - PRODUTOS
+   ========================= */
+
+.financeiro-produtos-panel {
+  margin-bottom: 22px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 3px 12px #6b30400b;
+}
+
+.financeiro-produtos-panel .financeiro-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.produto-grid {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 9px;
+}
+
+.produto-item {
+  background: #fffaf7;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.produto-item > div {
+  min-width: 0;
+}
+
+.produto-item strong,
+.produto-item span,
+.produto-item small {
+  display: block;
+}
+
+.produto-item strong {
+  color: #4b3040;
+  font: 600 13px 'Playfair Display', serif;
+}
+
+.produto-item span {
+  margin-top: 3px;
+  color: #765e69;
+  font-size: 10px;
+}
+
+.produto-item small {
+  margin-top: 3px;
+  color: var(--wine);
+  font-size: 9px;
+}
+
+.produto-item > button {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: 9px;
+  background: #f8e9ed;
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.produto-custo-preview {
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fbf2ef;
+  border: 1px solid #ead7d2;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.produto-custo-preview strong {
+  color: var(--wine-dark);
+  font-size: 12px;
+}
+
+.financeiro-lucro {
+  display: block;
+  margin-top: 3px;
+  color: var(--green);
+  font-size: 9px;
+}
+
+.financeiro-material-auto {
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: #fbf2ef;
+  border: 1px solid #ead7d2;
+}
+
+.financeiro-material-auto strong {
+  display: block;
+  color: var(--wine-dark);
+  font-size: 11px;
+}
+
+.financeiro-material-auto span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}

@@ -66,6 +66,25 @@ const formatarMoeda = (valor: number) =>
     currency: "BRL",
   });
 
+type Filtro = "todos" | "entradas" | "saidas";
+
+type Movimentacao = {
+  id: string;
+  tipo: "entrada" | "saida";
+  titulo: string;
+  subtitulo: string;
+  detalhe: string;
+  valor: number;
+  data: string;
+};
+
+function dataLocal(iso: string) {
+  const d = new Date(iso);
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
 const Financeiro = () => {
   const [lancamentos, setLancamentos] = useState<
     LancamentoFinanceiro[]
@@ -89,6 +108,7 @@ const Financeiro = () => {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const [modalAberto, setModalAberto] = useState(false);
 
@@ -249,6 +269,49 @@ const Financeiro = () => {
       resultado: receitas - custos,
     };
   }, [lancamentos, despesas]);
+
+  const movimentacoes = useMemo<Movimentacao[]>(() => {
+    const entradas: Movimentacao[] = lancamentos.map((item) => {
+      const ag = agendamentos.find((a) => a.id === item.agendamento_id);
+      const cliente = ag ? clientes.find((c) => c.id === ag.cliente_id) : null;
+      const servico = ag ? servicos.find((s) => s.id === ag.servico_id) : null;
+
+      return {
+        id: `e-${item.id}`,
+        tipo: "entrada",
+        titulo: cliente?.nome ?? "Entrada avulsa",
+        subtitulo: servico?.nome ?? "Lançamento financeiro",
+        detalhe:
+          item.forma_pagamento +
+          (item.custo_material > 0
+            ? ` · Material ${formatarMoeda(item.custo_material)}`
+            : ""),
+        valor: item.valor_recebido,
+        data: ag?.data ?? dataLocal(item.created_at),
+      };
+    });
+
+    const saidas: Movimentacao[] = despesas.map((d) => ({
+      id: `s-${d.id}`,
+      tipo: "saida",
+      titulo: d.descricao,
+      subtitulo: `${d.categoria} · ${d.tipo}`,
+      detalhe: "",
+      valor: d.valor,
+      data: d.data,
+    }));
+
+    return [...entradas, ...saidas].sort((a, b) =>
+      b.data.localeCompare(a.data)
+    );
+  }, [lancamentos, despesas, agendamentos, clientes, servicos]);
+
+  const movimentacoesVisiveis = movimentacoes.filter(
+    (m) =>
+      filtro === "todos" ||
+      (filtro === "entradas" ? m.tipo === "entrada" : m.tipo === "saida")
+  );
+
 
   function obterCliente(id: string) {
     return clientes.find((cliente) => cliente.id === id);
@@ -544,12 +607,12 @@ const Financeiro = () => {
       <div className="financeiro-botoes">
         <button type="button" onClick={() => abrirModal("receita")}>
           <ArrowUp size={17} />
-          Adicionar receita
+          Nova entrada
         </button>
 
         <button type="button" onClick={() => abrirModal("despesa")}>
           <ArrowDown size={17} />
-          Adicionar despesa
+          Nova saída
         </button>
 
         <button type="button" onClick={abrirProdutos}>
@@ -607,145 +670,56 @@ const Financeiro = () => {
       <section className="financeiro-detalhes">
         <div className="financeiro-section-header">
           <div>
-            <h2>Atendimentos</h2>
-            <p>
-              Receitas registradas pelos seus atendimentos.
-            </p>
+            <h2>Movimentações</h2>
+            <p>Tudo que entrou e saiu do seu negócio.</p>
           </div>
+        </div>
+
+        <div className="financeiro-abas">
+          {(["todos", "entradas", "saidas"] as Filtro[]).map((aba) => (
+            <button
+              key={aba}
+              type="button"
+              className={filtro === aba ? "ativa" : ""}
+              onClick={() => setFiltro(aba)}
+            >
+              {aba === "todos" ? "Tudo" : aba === "entradas" ? "Entradas" : "Saídas"}
+            </button>
+          ))}
         </div>
 
         {carregando ? (
-          <div className="financeiro-vazio">
-            Carregando financeiro...
-          </div>
-        ) : lancamentos.length === 0 ? (
+          <div className="financeiro-vazio">Carregando financeiro...</div>
+        ) : movimentacoesVisiveis.length === 0 ? (
           <div className="financeiro-vazio">
             <Wallet size={30} />
-
-            <strong>
-              Nenhuma receita registrada
-            </strong>
-
+            <strong>Nada por aqui ainda</strong>
             <span>
-              Os valores dos seus atendimentos aparecerão
-              aqui quando forem registrados.
+              Use "Nova entrada" ou "Nova saída" para registrar o que
+              entrou e o que você gastou.
             </span>
           </div>
         ) : (
           <div className="financeiro-lista">
-            {lancamentos.map((item) => {
-              const agendamento = agendamentos.find(
-                (ag) => ag.id === item.agendamento_id
-              );
+            {movimentacoesVisiveis.map((m) => (
+              <article className="financeiro-lancamento" key={m.id}>
+                <div className={`mov-icone ${m.tipo}`}>
+                  {m.tipo === "entrada" ? <ArrowUp size={15} /> : <ArrowDown size={15} />}
+                </div>
 
-              const cliente = agendamento
-                ? obterCliente(agendamento.cliente_id)
-                : null;
-
-              const servico = agendamento
-                ? obterServico(agendamento.servico_id)
-                : null;
-
-              return (
-                <article
-                  className="financeiro-lancamento"
-                  key={item.id}
-                >
-                  <div>
-                    <strong>
-                      {cliente?.nome ??
-                        "Receita avulsa"}
-                    </strong>
-
-                    <span>
-                      {servico?.nome ??
-                        "Lançamento financeiro"}
-                    </span>
-
-                    <small>
-                      {item.forma_pagamento}
-                      {item.custo_material > 0
-                        ? ` · Material ${formatarMoeda(
-                            item.custo_material
-                          )}`
-                        : ""}
-                    </small>
-                  </div>
-
-                  <div className="financeiro-valores">
-                    <strong>
-                      {formatarMoeda(
-                        item.valor_recebido
-                      )}
-                    </strong>
-                    {item.custo_material > 0 && (
-                      <small className="financeiro-lucro">
-                        Lucro:{" "}
-                        {formatarMoeda(
-                          item.valor_recebido - item.custo_material
-                        )}
-                      </small>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="financeiro-detalhes">
-        <div className="financeiro-section-header">
-          <div>
-            <h2>Despesas</h2>
-            <p>
-              Gastos registrados no seu negócio.
-            </p>
-          </div>
-        </div>
-
-        {despesas.length === 0 ? (
-          <div className="financeiro-vazio">
-            <ArrowDown size={30} />
-
-            <strong>
-              Nenhuma despesa registrada
-            </strong>
-
-            <span>
-              Suas despesas aparecerão aqui.
-            </span>
-          </div>
-        ) : (
-          <div className="financeiro-lista">
-            {despesas.map((despesa) => (
-              <article
-                className="financeiro-lancamento"
-                key={despesa.id}
-              >
-                <div>
-                  <strong>
-                    {despesa.descricao}
-                  </strong>
-
-                  <span>
-                    {despesa.categoria} ·{" "}
-                    {despesa.tipo}
-                  </span>
-
+                <div className="mov-info">
+                  <strong>{m.titulo}</strong>
+                  <span>{m.subtitulo}</span>
                   <small>
-                    {new Date(
-                      `${despesa.data}T00:00:00`
-                    ).toLocaleDateString("pt-BR")}
+                    {new Date(`${m.data}T00:00:00`).toLocaleDateString("pt-BR")}
+                    {m.detalhe ? ` · ${m.detalhe}` : ""}
                   </small>
                 </div>
 
-                <div className="financeiro-valores despesa-valor">
+                <div className={`financeiro-valores ${m.tipo === "saida" ? "despesa-valor" : ""}`}>
                   <strong>
-                    -{" "}
-                    {formatarMoeda(
-                      despesa.valor
-                    )}
+                    {m.tipo === "entrada" ? "+ " : "− "}
+                    {formatarMoeda(m.valor)}
                   </strong>
                 </div>
               </article>
@@ -778,13 +752,13 @@ const Financeiro = () => {
 
             <h2>
               {tipoLancamento === "receita"
-                ? "Adicionar receita"
-                : "Adicionar despesa"}
+                ? "Nova entrada"
+                : "Nova saída"}
             </h2>
 
             <p>
               {tipoLancamento === "receita"
-                ? "Registre o valor recebido por um atendimento."
+                ? "Registre um valor que entrou."
                 : "Registre um gasto do seu negócio."}
             </p>
 
