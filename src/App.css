@@ -2810,3 +2810,14 @@ body {
   font-size: 15px;
   font-weight: 700;
 }
+
+.bottom-nav {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  width: 100%;
+}
+
+.bottom-nav button {
+  min-width: 0;
+  width: 100%;
+}
