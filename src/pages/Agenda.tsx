@@ -8,6 +8,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   CalendarDays,
 } from "lucide-react";
 
@@ -99,10 +101,12 @@ function gerarDiasDoCalendario(mes: Date) {
 }
 
 function formatarMesAno(data: Date) {
-  return data.toLocaleDateString("pt-BR", {
+  const texto = data.toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric",
   });
+
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 function formatarDiaCompleto(data: Date) {
@@ -147,6 +151,7 @@ export function Agenda() {
   const [mesCalendario, setMesCalendario] = useState(
     inicioDoMes(hoje)
   );
+  const [calendarioAberto, setCalendarioAberto] = useState(false);
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -191,6 +196,18 @@ export function Agenda() {
     [mesCalendario]
   );
 
+  const diasSemana = useMemo(() => {
+    const inicio = inicioDaSemana(dataSelecionada);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const data = new Date(inicio);
+      data.setDate(inicio.getDate() + index);
+      return data;
+    });
+  }, [dataSelecionada]);
+
+  const diasVisiveis = calendarioAberto ? diasCalendario : diasSemana;
+
   const agendamentosDoDia = useMemo(
     () =>
       agendamentos.filter(
@@ -199,6 +216,14 @@ export function Agenda() {
       ),
     [agendamentos, dataSelecionada]
   );
+
+  const atendimentosAtivos = agendamentosDoDia.filter(
+    (agendamento) => agendamento.status !== "cancelado"
+  ).length;
+
+  const atendimentosConcluidos = agendamentosDoDia.filter(
+    (agendamento) => agendamento.status === "concluido"
+  ).length;
 
   const horarios = [
     "08:00",
@@ -599,6 +624,19 @@ export function Agenda() {
     setDataSelecionada(novoMes);
   }
 
+  function mudarPeriodo(direcao: number) {
+    if (calendarioAberto) {
+      mudarMes(direcao);
+      return;
+    }
+
+    const nova = new Date(dataSelecionada);
+    nova.setDate(nova.getDate() + 7 * direcao);
+
+    setDataSelecionada(nova);
+    setMesCalendario(inicioDoMes(nova));
+  }
+
   function voltarParaHoje() {
     const hojeAtual = new Date();
     hojeAtual.setHours(0, 0, 0, 0);
@@ -987,8 +1025,8 @@ export function Agenda() {
           <div className="agenda-calendar-controls">
             <button
               type="button"
-              onClick={() => mudarMes(-1)}
-              aria-label="Mês anterior"
+              onClick={() => mudarPeriodo(-1)}
+              aria-label="Anterior"
             >
               <ChevronLeft size={18} />
             </button>
@@ -1003,8 +1041,8 @@ export function Agenda() {
 
             <button
               type="button"
-              onClick={() => mudarMes(1)}
-              aria-label="Próximo mês"
+              onClick={() => mudarPeriodo(1)}
+              aria-label="Próximo"
             >
               <ChevronRight size={18} />
             </button>
@@ -1018,9 +1056,13 @@ export function Agenda() {
         </div>
 
         <div className="calendar-grid">
-          {diasCalendario.map((dia) => {
-            const pertenceAoMes = dia.getMonth() === mesCalendario.getMonth();
+          {diasVisiveis.map((dia) => {
+            const pertenceAoMes =
+              dia.getMonth() === mesCalendario.getMonth() &&
+              dia.getFullYear() === mesCalendario.getFullYear();
+
             const selecionadoDia = mesmaData(dia, dataSelecionada);
+
             const possuiAgendamento = agendamentos.some(
               (agendamento) =>
                 agendamento.data === formatarDataBanco(dia)
@@ -1032,7 +1074,7 @@ export function Agenda() {
                 type="button"
                 className={[
                   "calendar-day",
-                  !pertenceAoMes ? "outside-month" : "",
+                  calendarioAberto && !pertenceAoMes ? "outside-month" : "",
                   selecionadoDia ? "selected-day" : "",
                 ]
                   .filter(Boolean)
@@ -1040,12 +1082,43 @@ export function Agenda() {
                 onClick={() => selecionarDiaCalendario(dia)}
               >
                 <span>{dia.getDate()}</span>
-                {possuiAgendamento && <i aria-label="Possui agendamento" />}
+                {possuiAgendamento && (
+                  <i aria-label="Possui agendamento" />
+                )}
               </button>
             );
           })}
         </div>
+
+        <button
+          type="button"
+          className="calendar-toggle"
+          onClick={() => setCalendarioAberto((aberto) => !aberto)}
+        >
+          {calendarioAberto ? (
+            <ChevronUp size={16} />
+          ) : (
+            <ChevronDown size={16} />
+          )}
+          {calendarioAberto ? "Recolher mês" : "Ver mês inteiro"}
+        </button>
       </section>
+
+      {!carregando && (
+        <p className="agenda-resumo">
+          {atendimentosAtivos === 0
+            ? "Nenhum atendimento neste dia"
+            : `${atendimentosAtivos} atendimento${
+                atendimentosAtivos > 1 ? "s" : ""
+              }${
+                atendimentosConcluidos > 0
+                  ? ` • ${atendimentosConcluidos} concluído${
+                      atendimentosConcluidos > 1 ? "s" : ""
+                    }`
+                  : ""
+              }`}
+        </p>
+      )}
 
       {erro && !modalAberto && !conclusaoAberta && (
         <div className="agenda-error">
