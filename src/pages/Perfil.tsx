@@ -9,7 +9,6 @@ import {
   LogOut,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import "./Perfil.css";
 
 type ConfiguracaoNegocio = {
   id?: string;
