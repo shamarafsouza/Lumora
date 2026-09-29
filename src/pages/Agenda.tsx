@@ -474,13 +474,41 @@ export function Agenda() {
 
     const dataBanco = formatarDataBanco(dataSelecionada);
 
-    const horarioExistente = agendamentos.some(
-      (agendamento) =>
-        agendamento.horario.slice(0, 5) === horario
+    const servicoSelecionado = servicos.find(
+      (servico) => servico.id === servicoId
     );
 
-    if (horarioExistente) {
-      setErro("Já existe um atendimento nesse horário.");
+    if (!servicoSelecionado) {
+      setErro("Não foi possível identificar o serviço selecionado.");
+      setSalvando(false);
+      return;
+    }
+
+    function minutosDoHorario(valor: string) {
+      const [horas, minutos] = valor.slice(0, 5).split(":").map(Number);
+      return horas * 60 + minutos;
+    }
+
+    const inicioNovo = minutosDoHorario(horario);
+    const fimNovo =
+      inicioNovo + Math.max(Number(servicoSelecionado.duracao) || 60, 1);
+
+    const horarioEmConflito = agendamentos.some((agendamento) => {
+      const servicoExistente = servicos.find(
+        (servico) => servico.id === agendamento.servico_id
+      );
+
+      const inicioExistente = minutosDoHorario(agendamento.horario);
+      const fimExistente =
+        inicioExistente + Math.max(Number(servicoExistente?.duracao) || 60, 1);
+
+      return inicioNovo < fimExistente && fimNovo > inicioExistente;
+    });
+
+    if (horarioEmConflito) {
+      setErro(
+        "Esse horário entra em conflito com outro atendimento. Escolha outro horário."
+      );
       setSalvando(false);
       return;
     }
@@ -942,70 +970,60 @@ export function Agenda() {
       ) : (
         <section className="timeline">
           {horarios.map((horarioHora) => {
-            const agendamento =
-              agendamentos.find(
-                (item) =>
-                  item.horario.slice(0, 5) ===
-                  horarioHora
-              );
+            const agendamento = agendamentos.find(
+              (item) => item.horario.slice(0, 5) === horarioHora
+            );
 
-            if (!agendamento) {
+            if (agendamento) {
+              const cliente = obterCliente(agendamento.cliente_id);
+              const servico = obterServico(agendamento.servico_id);
+
               return (
                 <button
                   type="button"
-                  className="available available-button"
-                  key={horarioHora}
-                  onClick={() =>
-                    abrirAgendamento(
-                      horarioHora
-                    )
-                  }
+                  key={agendamento.id}
+                  className={`appointment ${agendamento.status}`}
+                  onClick={() => setSelecionado(agendamento)}
                 >
-                  <span>{horarioHora}</span>
-
-                  <b>Disponível</b>
+                  <span className="slot-time">{horarioHora}</span>
+                  <div>
+                    <strong>{cliente?.nome ?? "Cliente"}</strong>
+                    <small>
+                      {servico?.nome ?? "Serviço"} • {servico?.duracao ?? 0} min
+                    </small>
+                  </div>
+                  <em>{nomeStatus(agendamento.status)}</em>
                 </button>
               );
             }
 
-            const cliente = obterCliente(
-              agendamento.cliente_id
-            );
+            const inicioSlot = Number(horarioHora.slice(0, 2)) * 60 + Number(horarioHora.slice(3, 5));
+            const atendimentoEmAndamento = agendamentos.find((item) => {
+              const inicio = Number(item.horario.slice(0, 2)) * 60 + Number(item.horario.slice(3, 5));
+              const servico = obterServico(item.servico_id);
+              const fim = inicio + Math.max(Number(servico?.duracao) || 60, 1);
+              return inicioSlot > inicio && inicioSlot < fim;
+            });
 
-            const servico = obterServico(
-              agendamento.servico_id
-            );
+            if (atendimentoEmAndamento) {
+              const servico = obterServico(atendimentoEmAndamento.servico_id);
+              return (
+                <div className="available occupied-slot" key={horarioHora}>
+                  <span>{horarioHora}</span>
+                  <b>Ocupado • {servico?.nome ?? "Atendimento"}</b>
+                </div>
+              );
+            }
 
             return (
               <button
                 type="button"
-                key={agendamento.id}
-                className={`appointment ${agendamento.status}`}
-                onClick={() =>
-                  setSelecionado(agendamento)
-                }
+                className="available available-button"
+                key={horarioHora}
+                onClick={() => abrirAgendamento(horarioHora)}
               >
-                <span className="slot-time">
-                  {horarioHora}
-                </span>
-
-                <div>
-                  <strong>
-                    {cliente?.nome ??
-                      "Cliente"}
-                  </strong>
-
-                  <small>
-                    {servico?.nome ??
-                      "Serviço"}
-                  </small>
-                </div>
-
-                <em>
-                  {nomeStatus(
-                    agendamento.status
-                  )}
-                </em>
+                <span>{horarioHora}</span>
+                <b>Disponível</b>
               </button>
             );
           })}
