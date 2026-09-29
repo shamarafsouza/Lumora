@@ -6,6 +6,9 @@ import {
   LoaderCircle,
   Check,
   Settings,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -72,6 +75,36 @@ function mesmaData(a: Date, b: Date) {
   );
 }
 
+function inicioDoMes(data: Date) {
+  return new Date(data.getFullYear(), data.getMonth(), 1);
+}
+
+function fimDoMes(data: Date) {
+  return new Date(data.getFullYear(), data.getMonth() + 1, 1);
+}
+
+function gerarDiasDoCalendario(mes: Date) {
+  const primeiroDia = inicioDoMes(mes);
+  const inicio = new Date(primeiroDia);
+  const diaSemana = inicio.getDay();
+  const deslocamento = diaSemana === 0 ? 6 : diaSemana - 1;
+
+  inicio.setDate(primeiroDia.getDate() - deslocamento);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const data = new Date(inicio);
+    data.setDate(inicio.getDate() + index);
+    return data;
+  });
+}
+
+function formatarMesAno(data: Date) {
+  return data.toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function formatarDiaCompleto(data: Date) {
   return data.toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -111,6 +144,9 @@ export function Agenda() {
   }, []);
 
   const [dataSelecionada, setDataSelecionada] = useState(hoje);
+  const [mesCalendario, setMesCalendario] = useState(
+    inicioDoMes(hoje)
+  );
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -150,28 +186,19 @@ export function Agenda() {
   const [salvandoConclusao, setSalvandoConclusao] =
     useState(false);
 
-  const semanaAtual = useMemo(
-    () => inicioDaSemana(dataSelecionada),
-    [dataSelecionada]
+  const diasCalendario = useMemo(
+    () => gerarDiasDoCalendario(mesCalendario),
+    [mesCalendario]
   );
 
-  const dias = useMemo<DiaSemana[]>(() => {
-    return Array.from({ length: 7 }, (_, index) => {
-      const data = new Date(semanaAtual);
-
-      data.setDate(semanaAtual.getDate() + index);
-
-      return {
-        data,
-        nome: data
-          .toLocaleDateString("pt-BR", {
-            weekday: "short",
-          })
-          .replace(".", "")
-          .slice(0, 3),
-      };
-    });
-  }, [semanaAtual]);
+  const agendamentosDoDia = useMemo(
+    () =>
+      agendamentos.filter(
+        (agendamento) =>
+          agendamento.data === formatarDataBanco(dataSelecionada)
+      ),
+    [agendamentos, dataSelecionada]
+  );
 
   const horarios = [
     "08:00",
@@ -205,7 +232,8 @@ export function Agenda() {
       return;
     }
 
-    const dataBanco = formatarDataBanco(dataSelecionada);
+    const inicioMesBanco = formatarDataBanco(inicioDoMes(mesCalendario));
+    const fimMesBanco = formatarDataBanco(fimDoMes(mesCalendario));
 
     const [
       clientesResponse,
@@ -248,8 +276,10 @@ export function Agenda() {
           "id, profissional_id, cliente_id, servico_id, data, horario, status"
         )
         .eq("profissional_id", user.id)
-        .eq("data", dataBanco)
+        .gte("data", inicioMesBanco)
+        .lt("data", fimMesBanco)
         .neq("status", "cancelado")
+        .order("data")
         .order("horario"),
     ]);
 
@@ -344,7 +374,7 @@ export function Agenda() {
 
   useEffect(() => {
     carregarDados();
-  }, [dataSelecionada]);
+  }, [mesCalendario]);
 
   /* =========================
      ATUALIZAR MODAL
@@ -549,6 +579,31 @@ export function Agenda() {
 
     setSalvando(false);
     setModalAberto(false);
+  }
+
+  function selecionarDiaCalendario(data: Date) {
+    const novoMes = inicioDoMes(data);
+
+    setMesCalendario(novoMes);
+    setDataSelecionada(new Date(data));
+  }
+
+  function mudarMes(direcao: number) {
+    const novoMes = new Date(
+      mesCalendario.getFullYear(),
+      mesCalendario.getMonth() + direcao,
+      1
+    );
+
+    setMesCalendario(novoMes);
+    setDataSelecionada(novoMes);
+  }
+
+  function voltarParaHoje() {
+    const hojeAtual = new Date();
+    hojeAtual.setHours(0, 0, 0, 0);
+    setMesCalendario(inicioDoMes(hojeAtual));
+    setDataSelecionada(hojeAtual);
   }
 
   /* =========================
@@ -922,33 +977,75 @@ export function Agenda() {
         </div>
       </header>
 
-      <div className="week">
-        {dias.map((dia) => {
-          const selecionadoDia = mesmaData(
-            dia.data,
-            dataSelecionada
-          );
+      <section className="agenda-calendar">
+        <div className="agenda-calendar-header">
+          <div className="agenda-calendar-title">
+            <CalendarDays size={17} />
+            <strong>{formatarMesAno(mesCalendario)}</strong>
+          </div>
 
-          return (
+          <div className="agenda-calendar-controls">
             <button
-              key={dia.data.toISOString()}
               type="button"
-              className={
-                selecionadoDia
-                  ? "selected-day"
-                  : ""
-              }
-              onClick={() =>
-                setDataSelecionada(dia.data)
-              }
+              onClick={() => mudarMes(-1)}
+              aria-label="Mês anterior"
             >
-              <span>{dia.nome}</span>
-
-              <b>{dia.data.getDate()}</b>
+              <ChevronLeft size={18} />
             </button>
-          );
-        })}
-      </div>
+
+            <button
+              type="button"
+              className="agenda-today-button"
+              onClick={voltarParaHoje}
+            >
+              Hoje
+            </button>
+
+            <button
+              type="button"
+              onClick={() => mudarMes(1)}
+              aria-label="Próximo mês"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="calendar-weekdays">
+          {["seg", "ter", "qua", "qui", "sex", "sáb", "dom"].map((dia) => (
+            <span key={dia}>{dia}</span>
+          ))}
+        </div>
+
+        <div className="calendar-grid">
+          {diasCalendario.map((dia) => {
+            const pertenceAoMes = dia.getMonth() === mesCalendario.getMonth();
+            const selecionadoDia = mesmaData(dia, dataSelecionada);
+            const possuiAgendamento = agendamentos.some(
+              (agendamento) =>
+                agendamento.data === formatarDataBanco(dia)
+            );
+
+            return (
+              <button
+                key={dia.toISOString()}
+                type="button"
+                className={[
+                  "calendar-day",
+                  !pertenceAoMes ? "outside-month" : "",
+                  selecionadoDia ? "selected-day" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => selecionarDiaCalendario(dia)}
+              >
+                <span>{dia.getDate()}</span>
+                {possuiAgendamento && <i aria-label="Possui agendamento" />}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {erro && !modalAberto && !conclusaoAberta && (
         <div className="agenda-error">
@@ -970,7 +1067,7 @@ export function Agenda() {
       ) : (
         <section className="timeline">
           {horarios.map((horarioHora) => {
-            const agendamento = agendamentos.find(
+            const agendamento = agendamentosDoDia.find(
               (item) => item.horario.slice(0, 5) === horarioHora
             );
 
@@ -998,7 +1095,7 @@ export function Agenda() {
             }
 
             const inicioSlot = Number(horarioHora.slice(0, 2)) * 60 + Number(horarioHora.slice(3, 5));
-            const atendimentoEmAndamento = agendamentos.find((item) => {
+            const atendimentoEmAndamento = agendamentosDoDia.find((item) => {
               const inicio = Number(item.horario.slice(0, 2)) * 60 + Number(item.horario.slice(3, 5));
               const servico = obterServico(item.servico_id);
               const fim = inicio + Math.max(Number(servico?.duracao) || 60, 1);
