@@ -2014,3 +2014,75 @@ body {
   flex-shrink: 0;
   color: var(--gold);
 }
+
+/* =========================
+   DASHBOARD - VISÃO FINANCEIRA
+   ========================= */
+
+.dashboard-finance-section {
+  margin-top: 28px;
+}
+
+.dashboard-finance-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.dashboard-finance-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 10px;
+  box-shadow: 0 4px 15px #6b30400c;
+}
+
+.dashboard-finance-icon {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+
+.dashboard-finance-card span {
+  display: block;
+  color: #987f89;
+  font-size: 9px;
+}
+
+.dashboard-finance-card strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dashboard-finance-card.receita .dashboard-finance-icon {
+  background: #e7f3ed;
+  color: var(--green);
+}
+
+.dashboard-finance-card.receita strong {
+  color: var(--green);
+}
+
+.dashboard-finance-card.custo .dashboard-finance-icon {
+  background: #f8e9ed;
+  color: var(--wine);
+}
+
+.dashboard-finance-card.custo strong {
+  color: var(--wine);
+}
+
+.dashboard-finance-card.resultado .dashboard-finance-icon {
+  background: #f6eedf;
+  color: var(--gold);
+}
+
+.dashboard-finance-card.resultado strong {
+  color: var(--wine-dark);
+}
