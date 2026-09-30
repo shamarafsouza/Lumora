@@ -11,42 +11,63 @@ type InicioProps = {
   onCriarConta: () => void;
 };
 
-export function Inicio({ onEntrar, onCriarConta }: InicioProps) {
+export function Inicio({
+  onEntrar,
+  onCriarConta,
+}: InicioProps) {
   return (
     <main className="landing-page">
       <div className="landing-glow" />
 
-      <header className="landing-header">
-        <div className="brand-mark">L</div>
+      {/* =====================================================
+          CABEÇALHO / LOGO
+          ===================================================== */}
 
-        <span className="brand-name">LUMORA</span>
+      <header className="landing-header">
+        <img
+          src="/lumora.png"
+          alt="Lumora — Gestão para profissionais de beleza"
+          className="landing-logo"
+        />
       </header>
+
+      {/* =====================================================
+          HERO
+          ===================================================== */}
 
       <section className="landing-hero">
         <div className="landing-badge">
-          ✦ ACESSO GRATUITO NO LANÇAMENTO
+          <span>✦</span>
+          ACESSO GRATUITO NO LANÇAMENTO
         </div>
 
         <h1>
           Seu negócio de beleza,
-          <span> mais organizado.</span>
+          <em> mais organizado.</em>
         </h1>
 
-        <p>
-          Agenda, clientes, serviços e financeiro em um só lugar,
-          feito para profissionais de beleza.
+        <p className="landing-description">
+          Agenda, clientes, serviços e financeiro em um só
+          lugar, feito para profissionais de beleza.
         </p>
+
+        {/* =================================================
+            AÇÕES
+            ================================================= */}
 
         <div className="landing-actions">
           <button
+            type="button"
             className="primary-button"
             onClick={onCriarConta}
           >
-            Criar minha conta
+            <span>Criar minha conta</span>
+
             <ArrowRight size={18} />
           </button>
 
           <button
+            type="button"
             className="secondary-button"
             onClick={onEntrar}
           >
@@ -54,43 +75,73 @@ export function Inicio({ onEntrar, onCriarConta }: InicioProps) {
           </button>
         </div>
 
+        {/* =================================================
+            AVISO GRATUITO
+            ================================================= */}
+
         <div className="free-notice">
-          <strong>Comece gratuitamente</strong>
+          <div className="free-notice-title">
+            <span>✦</span>
+            <strong>Comece gratuitamente</strong>
+          </div>
 
           <p>
-            O Lumora está gratuito durante o período de lançamento.
-            Futuramente, poderá haver um pequeno ajuste de preço para
-            manter e evoluir a plataforma. Você será avisada antes
-            de qualquer mudança.
+            O Lumora está gratuito durante o período de
+            lançamento. Futuramente, poderá haver um pequeno
+            ajuste de preço para manter e evoluir a
+            plataforma. Você será avisada antes de qualquer
+            mudança.
           </p>
         </div>
       </section>
 
+      {/* =====================================================
+          RECURSOS
+          ===================================================== */}
+
       <section className="landing-features">
-        <div>
-          <CalendarDays />
+        <div className="landing-feature">
+          <div className="landing-feature-icon">
+            <CalendarDays size={19} />
+          </div>
+
           <span>Agenda</span>
         </div>
 
-        <div>
-          <Users />
+        <div className="landing-feature">
+          <div className="landing-feature-icon">
+            <Users size={19} />
+          </div>
+
           <span>Clientes</span>
         </div>
 
-        <div>
-          <Sparkles />
+        <div className="landing-feature">
+          <div className="landing-feature-icon">
+            <Sparkles size={19} />
+          </div>
+
           <span>Serviços</span>
         </div>
 
-        <div>
-          <ChartNoAxesColumnIncreasing />
+        <div className="landing-feature">
+          <div className="landing-feature-icon">
+            <ChartNoAxesColumnIncreasing size={19} />
+          </div>
+
           <span>Financeiro</span>
         </div>
       </section>
 
-      <p className="landing-footer">
-        Lumora · Gestão para profissionais de beleza
-      </p>
+      {/* =====================================================
+          RODAPÉ
+          ===================================================== */}
+
+      <footer className="landing-footer">
+        <span>Lumora</span>
+        <span className="landing-footer-dot">·</span>
+        <span>Gestão para profissionais de beleza</span>
+      </footer>
     </main>
   );
 }
