@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import {
   MapPin,
   Phone,
@@ -7,6 +7,8 @@ import {
   Building2,
   FileText,
   LogOut,
+  Image as ImageIcon,
+  FolderOpen,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { aplicarCor } from "../lib/tema";
@@ -53,10 +55,20 @@ export default function Perfil({
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
+  const [logoArquivo, setLogoArquivo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState("");
 
   useEffect(() => {
     carregarPerfil();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (logoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
 
   async function carregarPerfil() {
     setCarregando(true);
@@ -98,6 +110,8 @@ export default function Perfil({
 
     const cor = negocio?.cor_principal ?? "#96264e";
 
+    const logoUrl = negocio?.logo_url ?? "";
+
     setConfig({
       nome_negocio: negocio?.nome_negocio ?? "",
       nome_profissional:
@@ -108,9 +122,12 @@ export default function Perfil({
       cidade: negocio?.cidade ?? "",
       endereco: negocio?.endereco ?? "",
       descricao: negocio?.descricao ?? "",
-      logo_url: negocio?.logo_url ?? "",
+      logo_url: logoUrl,
       cor_principal: cor,
     });
+
+    setLogoPreview(logoUrl);
+    setLogoArquivo(null);
 
     aplicarCor(cor);
 
@@ -131,12 +148,122 @@ export default function Perfil({
     }
   }
 
+  function selecionarLogo(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const arquivo = event.target.files?.[0];
+
+    if (!arquivo) {
+      return;
+    }
+
+    setMensagem("");
+    setErro("");
+
+    if (!arquivo.type.startsWith("image/")) {
+      setErro(
+        "Selecione uma imagem válida em PNG, JPG ou WEBP."
+      );
+      event.target.value = "";
+      return;
+    }
+
+    if (arquivo.size > 5 * 1024 * 1024) {
+      setErro("A imagem deve ter no máximo 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    if (logoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    const preview = URL.createObjectURL(arquivo);
+
+    setLogoArquivo(arquivo);
+    setLogoPreview(preview);
+
+    event.target.value = "";
+  }
+
+  function removerLogoSelecionada() {
+    if (logoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    setLogoArquivo(null);
+    setLogoPreview(config.logo_url);
+    setMensagem("");
+  }
+
+  async function enviarLogo(): Promise<string | null> {
+    if (!logoArquivo || !usuarioId) {
+      return config.logo_url.trim() || null;
+    }
+
+    const extensao =
+      logoArquivo.name.split(".").pop()?.toLowerCase() || "jpg";
+
+    const caminho =
+      `${usuarioId}/logo-${Date.now()}.${extensao}`;
+
+    const { error: erroUpload } = await supabase.storage
+      .from("logos")
+      .upload(caminho, logoArquivo, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: logoArquivo.type,
+      });
+
+    if (erroUpload) {
+      console.error("Erro ao enviar logo:", erroUpload);
+      throw new Error(
+        "Não foi possível enviar a logo. Verifique o armazenamento de imagens."
+      );
+    }
+
+    const { data } = supabase.storage
+      .from("logos")
+      .getPublicUrl(caminho);
+
+    if (!data.publicUrl) {
+      throw new Error(
+        "A imagem foi enviada, mas não foi possível obter o endereço da logo."
+      );
+    }
+
+    return data.publicUrl;
+  }
+
   async function salvarPerfil() {
     if (!usuarioId) return;
 
     setSalvando(true);
     setMensagem("");
     setErro("");
+
+    let logoUrl = config.logo_url.trim();
+
+    try {
+      if (logoArquivo) {
+        const novaLogoUrl = await enviarLogo();
+
+        if (!novaLogoUrl) {
+          throw new Error("Não foi possível obter a nova logo.");
+        }
+
+        logoUrl = novaLogoUrl;
+      }
+    } catch (uploadError) {
+      console.error(uploadError);
+      setErro(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Não foi possível enviar a logo."
+      );
+      setSalvando(false);
+      return;
+    }
 
     const { error } = await supabase
       .from("configuracoes_negocio")
@@ -151,7 +278,7 @@ export default function Perfil({
           cidade: config.cidade.trim(),
           endereco: config.endereco.trim(),
           descricao: config.descricao.trim(),
-          logo_url: config.logo_url.trim(),
+          logo_url: logoUrl,
           cor_principal: config.cor_principal,
           updated_at: new Date().toISOString(),
         },
@@ -178,6 +305,14 @@ export default function Perfil({
     if (erroPerfil) {
       console.error(erroPerfil);
     }
+
+    setConfig((atual) => ({
+      ...atual,
+      logo_url: logoUrl,
+    }));
+
+    setLogoArquivo(null);
+    setLogoPreview(logoUrl);
 
     aplicarCor(config.cor_principal);
 
@@ -263,9 +398,9 @@ export default function Perfil({
                 borderColor: config.cor_principal,
               }}
             >
-              {config.logo_url ? (
+              {logoPreview ? (
                 <img
-                  src={config.logo_url}
+                  src={logoPreview}
                   alt="Logo do negócio"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -279,9 +414,57 @@ export default function Perfil({
             <div className="perfil-logo-info">
               <strong>Logo do negócio</strong>
               <span>
-                Informe a URL da imagem da sua logo
-                abaixo.
+                Escolha uma imagem da galeria ou dos
+                arquivos do seu dispositivo.
               </span>
+
+              <div className="perfil-logo-actions">
+                <input
+                  id="perfil-logo-galeria"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/*"
+                  onChange={selecionarLogo}
+                  hidden
+                />
+
+                <input
+                  id="perfil-logo-arquivos"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/*"
+                  onChange={selecionarLogo}
+                  hidden
+                />
+
+                <label
+                  htmlFor="perfil-logo-galeria"
+                  className="perfil-upload-button"
+                >
+                  <ImageIcon size={17} />
+                  Galeria
+                </label>
+
+                <label
+                  htmlFor="perfil-logo-arquivos"
+                  className="perfil-upload-button perfil-upload-button-secondary"
+                >
+                  <FolderOpen size={17} />
+                  Arquivos
+                </label>
+
+                {logoArquivo && (
+                  <button
+                    type="button"
+                    className="perfil-remover-logo"
+                    onClick={removerLogoSelecionada}
+                  >
+                    Remover seleção
+                  </button>
+                )}
+              </div>
+
+              <small>
+                PNG, JPG ou WEBP · máximo de 5 MB
+              </small>
             </div>
           </div>
 
@@ -428,22 +611,6 @@ export default function Perfil({
               </div>
             </label>
 
-            <label className="perfil-field perfil-field-full">
-              <span>URL da logo</span>
-
-              <input
-                className="perfil-input"
-                type="url"
-                value={config.logo_url}
-                onChange={(e) =>
-                  atualizarCampo(
-                    "logo_url",
-                    e.target.value
-                  )
-                }
-                placeholder="https://..."
-              />
-            </label>
           </div>
         </section>
 
