@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+} from "lucide-react";
+
 import { supabase } from "../lib/supabase";
 
 type LoginProps = {
@@ -29,17 +35,18 @@ export function Login({
     setErro("");
     setSucesso("");
 
-    if (!email || !senha) {
+    if (!email.trim() || !senha) {
       setErro("Preencha seu e-mail e sua senha.");
       return;
     }
 
     setCarregando(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: senha,
-    });
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
 
     if (error) {
       setErro(
@@ -74,22 +81,25 @@ export function Login({
     }
 
     if (senha.length < 6) {
-      setErro("A senha precisa ter pelo menos 6 caracteres.");
+      setErro(
+        "A senha precisa ter pelo menos 6 caracteres."
+      );
       return;
     }
 
     setCarregando(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: senha,
-      options: {
-        data: {
-          nome: nome.trim(),
-          telefone: telefone.trim(),
+    const { data, error } =
+      await supabase.auth.signUp({
+        email: email.trim(),
+        password: senha,
+        options: {
+          data: {
+            nome: nome.trim(),
+            telefone: telefone.trim(),
+          },
         },
-      },
-    });
+      });
 
     if (error) {
       setErro(error.message);
@@ -98,15 +108,17 @@ export function Login({
     }
 
     if (data.user && data.session) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
+      const { error: profileError } =
+        await supabase.from("profiles").insert({
           id: data.user.id,
           nome: nome.trim(),
           telefone: telefone.trim() || null,
         });
 
-      if (profileError && profileError.code !== "23505") {
+      if (
+        profileError &&
+        profileError.code !== "23505"
+      ) {
         setErro(
           "Sua conta foi criada, mas não conseguimos salvar seu perfil."
         );
@@ -132,6 +144,10 @@ export function Login({
   ) {
     event.preventDefault();
 
+    if (carregando) {
+      return;
+    }
+
     if (cadastro) {
       await criarConta();
     } else {
@@ -139,23 +155,42 @@ export function Login({
     }
   }
 
+  function alternarModo() {
+    setCadastro((atual) => !atual);
+    setErro("");
+    setSucesso("");
+    setMostrarSenha(false);
+  }
+
   return (
     <main className="auth-page">
-      <button className="auth-back" onClick={onVoltar}>
+      <button
+        type="button"
+        className="auth-back"
+        onClick={onVoltar}
+      >
         <ArrowLeft size={18} />
         Voltar
       </button>
 
       <div className="auth-card">
+        {/* LOGO OFICIAL DO LUMORA */}
         <div className="auth-brand">
           <img
             src="/lumora.png"
-            alt="Lumora"
+            alt="Lumora — Gestão para profissionais de beleza"
             className="auth-logo"
           />
         </div>
 
+        {/* TÍTULO */}
         <div className="auth-heading">
+          <span className="auth-eyebrow">
+            {cadastro
+              ? "COMECE SUA JORNADA"
+              : "BEM-VINDA DE VOLTA"}
+          </span>
+
           <h1>
             {cadastro
               ? "Crie sua conta"
@@ -169,22 +204,29 @@ export function Login({
           </p>
         </div>
 
-        <form onSubmit={enviarFormulario}>
+        {/* FORMULÁRIO */}
+        <form
+          className="auth-form"
+          onSubmit={enviarFormulario}
+        >
           {cadastro && (
             <>
-              <label>
-                Nome
+              <label className="auth-field">
+                <span>Nome</span>
 
                 <input
                   type="text"
                   placeholder="Seu nome"
                   value={nome}
-                  onChange={(event) => setNome(event.target.value)}
+                  onChange={(event) =>
+                    setNome(event.target.value)
+                  }
+                  autoComplete="name"
                 />
               </label>
 
-              <label>
-                Telefone
+              <label className="auth-field">
+                <span>Telefone</span>
 
                 <input
                   type="tel"
@@ -193,36 +235,56 @@ export function Login({
                   onChange={(event) =>
                     setTelefone(event.target.value)
                   }
+                  autoComplete="tel"
                 />
               </label>
             </>
           )}
 
-          <label>
-            E-mail
+          <label className="auth-field">
+            <span>E-mail</span>
 
             <input
               type="email"
               placeholder="seuemail@email.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              autoComplete="email"
             />
           </label>
 
-          <label>
-            Senha
+          <label className="auth-field">
+            <span>Senha</span>
 
             <div className="password-field">
               <input
-                type={mostrarSenha ? "text" : "password"}
+                type={
+                  mostrarSenha
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Digite sua senha"
                 value={senha}
-                onChange={(event) => setSenha(event.target.value)}
+                onChange={(event) =>
+                  setSenha(event.target.value)
+                }
+                autoComplete={
+                  cadastro
+                    ? "new-password"
+                    : "current-password"
+                }
               />
 
               <button
                 type="button"
-                onClick={() => setMostrarSenha(!mostrarSenha)}
+                className="password-toggle"
+                onClick={() =>
+                  setMostrarSenha(
+                    (atual) => !atual
+                  )
+                }
                 aria-label={
                   mostrarSenha
                     ? "Ocultar senha"
@@ -238,18 +300,27 @@ export function Login({
             </div>
           </label>
 
+          {/* MENSAGEM DE ERRO */}
           {erro && (
-            <div className="auth-message auth-error">
+            <div
+              className="auth-message auth-error"
+              role="alert"
+            >
               {erro}
             </div>
           )}
 
+          {/* MENSAGEM DE SUCESSO */}
           {sucesso && (
-            <div className="auth-message auth-success">
+            <div
+              className="auth-message auth-success"
+              role="status"
+            >
               {sucesso}
             </div>
           )}
 
+          {/* RECUPERAÇÃO DE SENHA */}
           {!cadastro && (
             <button
               type="button"
@@ -264,6 +335,7 @@ export function Login({
             </button>
           )}
 
+          {/* BOTÃO PRINCIPAL */}
           <button
             type="submit"
             className="auth-submit"
@@ -275,6 +347,7 @@ export function Login({
                   size={18}
                   className="spin"
                 />
+
                 Aguarde...
               </>
             ) : cadastro ? (
@@ -285,6 +358,7 @@ export function Login({
           </button>
         </form>
 
+        {/* ALTERNAR LOGIN / CADASTRO */}
         <div className="auth-switch">
           <span>
             {cadastro
@@ -293,18 +367,19 @@ export function Login({
           </span>
 
           <button
-            onClick={() => {
-              setCadastro(!cadastro);
-              setErro("");
-              setSucesso("");
-            }}
+            type="button"
+            onClick={alternarModo}
           >
-            {cadastro ? "Entrar" : "Criar conta"}
+            {cadastro
+              ? "Entrar"
+              : "Criar conta"}
           </button>
         </div>
 
+        {/* ACESSO GRATUITO */}
         <div className="auth-free">
-          ✦ Seu acesso é gratuito durante o lançamento.
+          <span>✦</span>
+          Seu acesso é gratuito durante o lançamento.
         </div>
       </div>
     </main>
