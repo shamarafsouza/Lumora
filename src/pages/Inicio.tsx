@@ -1,9 +1,9 @@
 import {
+  ArrowRight,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   Sparkles,
   Users,
-  ArrowRight,
 } from "lucide-react";
 
 type InicioProps = {
@@ -19,10 +19,6 @@ export function Inicio({
     <main className="landing-page">
       <div className="landing-glow" />
 
-      {/* =====================================================
-          CABEÇALHO / LOGO
-          ===================================================== */}
-
       <header className="landing-header">
         <img
           src="/lumora.png"
@@ -30,10 +26,6 @@ export function Inicio({
           className="landing-logo"
         />
       </header>
-
-      {/* =====================================================
-          HERO
-          ===================================================== */}
 
       <section className="landing-hero">
         <div className="landing-badge">
@@ -51,10 +43,6 @@ export function Inicio({
           lugar, feito para profissionais de beleza.
         </p>
 
-        {/* =================================================
-            AÇÕES
-            ================================================= */}
-
         <div className="landing-actions">
           <button
             type="button"
@@ -62,7 +50,6 @@ export function Inicio({
             onClick={onCriarConta}
           >
             <span>Criar minha conta</span>
-
             <ArrowRight size={18} />
           </button>
 
@@ -74,10 +61,6 @@ export function Inicio({
             Já tenho uma conta
           </button>
         </div>
-
-        {/* =================================================
-            AVISO GRATUITO
-            ================================================= */}
 
         <div className="free-notice">
           <div className="free-notice-title">
@@ -95,16 +78,11 @@ export function Inicio({
         </div>
       </section>
 
-      {/* =====================================================
-          RECURSOS
-          ===================================================== */}
-
       <section className="landing-features">
         <div className="landing-feature">
           <div className="landing-feature-icon">
             <CalendarDays size={19} />
           </div>
-
           <span>Agenda</span>
         </div>
 
@@ -112,7 +90,6 @@ export function Inicio({
           <div className="landing-feature-icon">
             <Users size={19} />
           </div>
-
           <span>Clientes</span>
         </div>
 
@@ -120,7 +97,6 @@ export function Inicio({
           <div className="landing-feature-icon">
             <Sparkles size={19} />
           </div>
-
           <span>Serviços</span>
         </div>
 
@@ -128,14 +104,9 @@ export function Inicio({
           <div className="landing-feature-icon">
             <ChartNoAxesColumnIncreasing size={19} />
           </div>
-
           <span>Financeiro</span>
         </div>
       </section>
-
-      {/* =====================================================
-          RODAPÉ
-          ===================================================== */}
 
       <footer className="landing-footer">
         <span>Lumora</span>
