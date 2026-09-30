@@ -185,6 +185,66 @@ export function Agenda({
   const [jornadaAberta, setJornadaAberta] =
     useState(false);
 
+  const [nomeProfissional, setNomeProfissional] =
+    useState("Lumora");
+
+  const [iniciaisProfissional, setIniciaisProfissional] =
+    useState("LU");
+
+  useEffect(() => {
+    let montado = true;
+
+    async function carregarPerfil() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nome")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error(
+          "Erro ao carregar perfil:",
+          error
+        );
+      }
+
+      if (!montado) return;
+
+      const nomePerfil =
+        data?.nome?.trim() ||
+        user.user_metadata?.nome?.trim() ||
+        "Lumora";
+
+      setNomeProfissional(nomePerfil);
+
+      const partes: string[] = nomePerfil
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2);
+
+      const letras = partes
+        .map((parte: string) =>
+          parte.charAt(0).toUpperCase()
+        )
+        .join("");
+
+      setIniciaisProfissional(letras || "LU");
+    }
+
+    carregarPerfil();
+
+    return () => {
+      montado = false;
+    };
+  }, []);
+
   /* =========================
      CONCLUSÃO DO ATENDIMENTO
      ========================= */
@@ -1055,7 +1115,7 @@ export function Agenda({
     <main className="page agenda-page">
       <header className="top">
         <div>
-          <h1>Lumora</h1>
+          <h1>{nomeProfissional}</h1>
 
           <p>
             {formatarDiaCompleto(dataSelecionada)}
@@ -1088,7 +1148,7 @@ export function Agenda({
             aria-label="Abrir perfil"
             title="Perfil"
           >
-            LU
+            {iniciaisProfissional}
           </button>
         </div>
       </header>
