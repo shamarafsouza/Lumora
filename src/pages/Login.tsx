@@ -4,6 +4,8 @@ import {
   Eye,
   EyeOff,
   LoaderCircle,
+  Mail,
+  CheckCircle2,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -12,22 +14,39 @@ type LoginProps = {
   onVoltar: () => void;
   onLogin: () => void;
   modoCadastro?: boolean;
+  modoRecuperacao?: boolean;
+  modoNovaSenha?: boolean;
 };
 
 export function Login({
   onVoltar,
   onLogin,
   modoCadastro = false,
+  modoRecuperacao = false,
+  modoNovaSenha = false,
 }: LoginProps) {
   const [cadastro, setCadastro] = useState(modoCadastro);
+  const [recuperacao, setRecuperacao] =
+    useState(modoRecuperacao);
+  const [novaSenha, setNovaSenha] =
+    useState(modoNovaSenha);
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
 
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [carregando, setCarregando] = useState(false);
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] =
+    useState("");
+
+  const [mostrarSenha, setMostrarSenha] =
+    useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] =
+    useState(false);
+
+  const [carregando, setCarregando] =
+    useState(false);
+
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
@@ -50,7 +69,8 @@ export function Login({
 
     if (error) {
       setErro(
-        error.message === "Invalid login credentials"
+        error.message ===
+          "Invalid login credentials"
           ? "E-mail ou senha incorretos."
           : error.message
       );
@@ -109,11 +129,13 @@ export function Login({
 
     if (data.user && data.session) {
       const { error: profileError } =
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          nome: nome.trim(),
-          telefone: telefone.trim() || null,
-        });
+        await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            nome: nome.trim(),
+            telefone: telefone.trim() || null,
+          });
 
       if (
         profileError &&
@@ -139,28 +161,407 @@ export function Login({
     setCarregando(false);
   }
 
+  async function enviarRecuperacao() {
+    setErro("");
+    setSucesso("");
+
+    if (!email.trim()) {
+      setErro(
+        "Digite o e-mail cadastrado no Lumora."
+      );
+      return;
+    }
+
+    setCarregando(true);
+
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        {
+          redirectTo:
+            `${window.location.origin}/?recuperar-senha=true`,
+        }
+      );
+
+    if (error) {
+      setErro(
+        "Não foi possível enviar o e-mail de recuperação. Verifique o endereço informado."
+      );
+
+      setCarregando(false);
+      return;
+    }
+
+    setSucesso(
+      "Enviamos um link de recuperação para seu e-mail. Verifique sua caixa de entrada."
+    );
+
+    setCarregando(false);
+  }
+
+  async function atualizarSenha() {
+    setErro("");
+    setSucesso("");
+
+    if (senha.length < 6) {
+      setErro(
+        "A nova senha precisa ter pelo menos 6 caracteres."
+      );
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
+    setCarregando(true);
+
+    const { error } =
+      await supabase.auth.updateUser({
+        password: senha,
+      });
+
+    if (error) {
+      setErro(
+        "Não foi possível alterar sua senha. Tente novamente."
+      );
+
+      setCarregando(false);
+      return;
+    }
+
+    setSenha("");
+    setConfirmarSenha("");
+
+    setSucesso(
+      "Sua senha foi alterada com sucesso!"
+    );
+
+    setCarregando(false);
+  }
+
   async function enviarFormulario(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    if (carregando) {
+    if (carregando) return;
+
+    if (novaSenha) {
+      await atualizarSenha();
+      return;
+    }
+
+    if (recuperacao) {
+      await enviarRecuperacao();
       return;
     }
 
     if (cadastro) {
       await criarConta();
-    } else {
-      await entrar();
+      return;
     }
+
+    await entrar();
   }
 
-  function alternarModo() {
-    setCadastro((atual) => !atual);
+  function voltarParaLogin() {
+    setRecuperacao(false);
+    setNovaSenha(false);
+    setCadastro(false);
+
     setErro("");
     setSucesso("");
-    setMostrarSenha(false);
+    setSenha("");
+    setConfirmarSenha("");
   }
+
+  function alternarCadastro() {
+    setCadastro((atual) => !atual);
+    setRecuperacao(false);
+    setNovaSenha(false);
+
+    setErro("");
+    setSucesso("");
+    setSenha("");
+    setConfirmarSenha("");
+  }
+
+  /* =====================================================
+     NOVA SENHA
+     ===================================================== */
+
+  if (novaSenha) {
+    return (
+      <main className="auth-page">
+        <button
+          type="button"
+          className="auth-back"
+          onClick={onVoltar}
+        >
+          <ArrowLeft size={18} />
+          Voltar
+        </button>
+
+        <div className="auth-card">
+          <div className="auth-brand">
+            <img
+              src="/lumora.png"
+              alt="Lumora"
+              className="auth-logo"
+            />
+          </div>
+
+          <div className="auth-heading">
+            <span className="auth-eyebrow">
+              RECUPERAÇÃO DE SENHA
+            </span>
+
+            <h1>
+              Crie uma nova senha
+            </h1>
+
+            <p>
+              Escolha uma nova senha para continuar
+              usando o Lumora.
+            </p>
+          </div>
+
+          <form
+            className="auth-form"
+            onSubmit={enviarFormulario}
+          >
+            <label className="auth-field">
+              <span>Nova senha</span>
+
+              <div className="password-field">
+                <input
+                  type={
+                    mostrarSenha
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Digite sua nova senha"
+                  value={senha}
+                  onChange={(event) =>
+                    setSenha(event.target.value)
+                  }
+                  autoComplete="new-password"
+                />
+
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() =>
+                    setMostrarSenha(
+                      !mostrarSenha
+                    )
+                  }
+                >
+                  {mostrarSenha ? (
+                    <EyeOff size={19} />
+                  ) : (
+                    <Eye size={19} />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            <label className="auth-field">
+              <span>Confirmar nova senha</span>
+
+              <div className="password-field">
+                <input
+                  type={
+                    mostrarConfirmarSenha
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Digite a senha novamente"
+                  value={confirmarSenha}
+                  onChange={(event) =>
+                    setConfirmarSenha(
+                      event.target.value
+                    )
+                  }
+                  autoComplete="new-password"
+                />
+
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() =>
+                    setMostrarConfirmarSenha(
+                      !mostrarConfirmarSenha
+                    )
+                  }
+                >
+                  {mostrarConfirmarSenha ? (
+                    <EyeOff size={19} />
+                  ) : (
+                    <Eye size={19} />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            {erro && (
+              <div className="auth-message auth-error">
+                {erro}
+              </div>
+            )}
+
+            {sucesso && (
+              <div className="auth-message auth-success">
+                <CheckCircle2 size={16} />
+                {sucesso}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={carregando}
+            >
+              {carregando ? (
+                <>
+                  <LoaderCircle
+                    size={18}
+                    className="spin"
+                  />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar nova senha"
+              )}
+            </button>
+          </form>
+
+          {sucesso && (
+            <button
+              type="button"
+              className="auth-recovery-back"
+              onClick={voltarParaLogin}
+            >
+              Voltar para o login
+            </button>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  /* =====================================================
+     RECUPERAÇÃO
+     ===================================================== */
+
+  if (recuperacao) {
+    return (
+      <main className="auth-page">
+        <button
+          type="button"
+          className="auth-back"
+          onClick={onVoltar}
+        >
+          <ArrowLeft size={18} />
+          Voltar
+        </button>
+
+        <div className="auth-card">
+          <div className="auth-brand">
+            <img
+              src="/lumora.png"
+              alt="Lumora"
+              className="auth-logo"
+            />
+          </div>
+
+          <div className="auth-heading">
+            <span className="auth-eyebrow">
+              RECUPERAÇÃO DE SENHA
+            </span>
+
+            <h1>
+              Esqueceu sua senha?
+            </h1>
+
+            <p>
+              Informe seu e-mail e enviaremos um
+              link para você criar uma nova senha.
+            </p>
+          </div>
+
+          <form
+            className="auth-form"
+            onSubmit={enviarFormulario}
+          >
+            <label className="auth-field">
+              <span>E-mail</span>
+
+              <div className="auth-input-icon">
+                <Mail size={17} />
+
+                <input
+                  type="email"
+                  placeholder="seuemail@email.com"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
+                  autoComplete="email"
+                />
+              </div>
+            </label>
+
+            {erro && (
+              <div className="auth-message auth-error">
+                {erro}
+              </div>
+            )}
+
+            {sucesso && (
+              <div className="auth-message auth-success">
+                <CheckCircle2 size={16} />
+                <span>{sucesso}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={carregando}
+            >
+              {carregando ? (
+                <>
+                  <LoaderCircle
+                    size={18}
+                    className="spin"
+                  />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar link de recuperação"
+              )}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            className="auth-recovery-back"
+            onClick={voltarParaLogin}
+          >
+            <ArrowLeft size={15} />
+            Voltar para o login
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  /* =====================================================
+     LOGIN / CADASTRO
+     ===================================================== */
 
   return (
     <main className="auth-page">
@@ -170,20 +571,18 @@ export function Login({
         onClick={onVoltar}
       >
         <ArrowLeft size={18} />
-        Voltar
+        <span>Voltar</span>
       </button>
 
       <div className="auth-card">
-        {/* LOGO OFICIAL DO LUMORA */}
         <div className="auth-brand">
           <img
             src="/lumora.png"
-            alt="Lumora — Gestão para profissionais de beleza"
+            alt="Lumora"
             className="auth-logo"
           />
         </div>
 
-        {/* TÍTULO */}
         <div className="auth-heading">
           <span className="auth-eyebrow">
             {cadastro
@@ -204,7 +603,6 @@ export function Login({
           </p>
         </div>
 
-        {/* FORMULÁRIO */}
         <form
           className="auth-form"
           onSubmit={enviarFormulario}
@@ -282,60 +680,45 @@ export function Login({
                 className="password-toggle"
                 onClick={() =>
                   setMostrarSenha(
-                    (atual) => !atual
+                    !mostrarSenha
                   )
-                }
-                aria-label={
-                  mostrarSenha
-                    ? "Ocultar senha"
-                    : "Mostrar senha"
                 }
               >
                 {mostrarSenha ? (
-                  <EyeOff size={18} />
+                  <EyeOff size={19} />
                 ) : (
-                  <Eye size={18} />
+                  <Eye size={19} />
                 )}
               </button>
             </div>
           </label>
 
-          {/* MENSAGEM DE ERRO */}
           {erro && (
-            <div
-              className="auth-message auth-error"
-              role="alert"
-            >
+            <div className="auth-message auth-error">
               {erro}
             </div>
           )}
 
-          {/* MENSAGEM DE SUCESSO */}
           {sucesso && (
-            <div
-              className="auth-message auth-success"
-              role="status"
-            >
+            <div className="auth-message auth-success">
               {sucesso}
             </div>
           )}
 
-          {/* RECUPERAÇÃO DE SENHA */}
           {!cadastro && (
             <button
               type="button"
               className="forgot-password"
-              onClick={() =>
-                setSucesso(
-                  "A recuperação de senha será adicionada na próxima etapa."
-                )
-              }
+              onClick={() => {
+                setRecuperacao(true);
+                setErro("");
+                setSucesso("");
+              }}
             >
               Esqueci minha senha
             </button>
           )}
 
-          {/* BOTÃO PRINCIPAL */}
           <button
             type="submit"
             className="auth-submit"
@@ -347,7 +730,6 @@ export function Login({
                   size={18}
                   className="spin"
                 />
-
                 Aguarde...
               </>
             ) : cadastro ? (
@@ -358,7 +740,6 @@ export function Login({
           </button>
         </form>
 
-        {/* ALTERNAR LOGIN / CADASTRO */}
         <div className="auth-switch">
           <span>
             {cadastro
@@ -368,7 +749,7 @@ export function Login({
 
           <button
             type="button"
-            onClick={alternarModo}
+            onClick={alternarCadastro}
           >
             {cadastro
               ? "Entrar"
@@ -376,7 +757,6 @@ export function Login({
           </button>
         </div>
 
-        {/* ACESSO GRATUITO */}
         <div className="auth-free">
           <span>✦</span>
           Seu acesso é gratuito durante o lançamento.
