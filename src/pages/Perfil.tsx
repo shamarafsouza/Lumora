@@ -9,6 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { aplicarCor } from "../lib/tema";
 
 type ConfiguracaoNegocio = {
   id?: string;
@@ -36,7 +37,7 @@ const configuracaoInicial: Omit<
   endereco: "",
   descricao: "",
   logo_url: "",
-  cor_principal: "#6f263d",
+  cor_principal: "#96264e",
 };
 
 export default function Perfil({
@@ -75,19 +76,18 @@ export default function Perfil({
     setUsuarioId(user.id);
     setEmail(user.email ?? "");
 
-    // Dados básicos da conta
     const { data: perfil } = await supabase
       .from("profiles")
       .select("nome, telefone")
       .eq("id", user.id)
       .maybeSingle();
 
-    // Dados personalizados do negócio
-    const { data: negocio, error: erroNegocio } = await supabase
-      .from("configuracoes_negocio")
-      .select("*")
-      .eq("profissional_id", user.id)
-      .maybeSingle();
+    const { data: negocio, error: erroNegocio } =
+      await supabase
+        .from("configuracoes_negocio")
+        .select("*")
+        .eq("profissional_id", user.id)
+        .maybeSingle();
 
     if (erroNegocio) {
       console.error(erroNegocio);
@@ -96,19 +96,23 @@ export default function Perfil({
       return;
     }
 
+    const cor = negocio?.cor_principal ?? "#96264e";
+
     setConfig({
       nome_negocio: negocio?.nome_negocio ?? "",
       nome_profissional:
         negocio?.nome_profissional ?? perfil?.nome ?? "",
-      telefone: negocio?.telefone ?? perfil?.telefone ?? "",
+      telefone:
+        negocio?.telefone ?? perfil?.telefone ?? "",
       instagram: negocio?.instagram ?? "",
       cidade: negocio?.cidade ?? "",
       endereco: negocio?.endereco ?? "",
       descricao: negocio?.descricao ?? "",
       logo_url: negocio?.logo_url ?? "",
-      cor_principal:
-        negocio?.cor_principal ?? "#6f263d",
+      cor_principal: cor,
     });
+
+    aplicarCor(cor);
 
     setCarregando(false);
   }
@@ -121,6 +125,10 @@ export default function Perfil({
       ...atual,
       [campo]: valor,
     }));
+
+    if (campo === "cor_principal") {
+      aplicarCor(valor);
+    }
   }
 
   async function salvarPerfil() {
@@ -136,7 +144,8 @@ export default function Perfil({
         {
           profissional_id: usuarioId,
           nome_negocio: config.nome_negocio.trim(),
-          nome_profissional: config.nome_profissional.trim(),
+          nome_profissional:
+            config.nome_profissional.trim(),
           telefone: config.telefone.trim(),
           instagram: config.instagram.trim(),
           cidade: config.cidade.trim(),
@@ -158,7 +167,6 @@ export default function Perfil({
       return;
     }
 
-    // Mantém nome e telefone sincronizados com o perfil da conta
     const { error: erroPerfil } = await supabase
       .from("profiles")
       .update({
@@ -170,6 +178,8 @@ export default function Perfil({
     if (erroPerfil) {
       console.error(erroPerfil);
     }
+
+    aplicarCor(config.cor_principal);
 
     setMensagem("Perfil atualizado com sucesso.");
     setSalvando(false);
@@ -231,7 +241,6 @@ export default function Perfil({
       )}
 
       <div className="perfil-layout">
-        {/* IDENTIDADE DO NEGÓCIO */}
         <section className="perfil-card perfil-identidade">
           <div className="perfil-card-header">
             <div className="perfil-card-icon">
@@ -240,7 +249,6 @@ export default function Perfil({
 
             <div>
               <h2>Identidade do negócio</h2>
-
               <p>
                 Essas informações ajudam a apresentar
                 sua marca.
@@ -248,7 +256,6 @@ export default function Perfil({
             </div>
           </div>
 
-          {/* LOGO */}
           <div className="perfil-logo-area">
             <div
               className="perfil-logo-preview"
@@ -271,7 +278,6 @@ export default function Perfil({
 
             <div className="perfil-logo-info">
               <strong>Logo do negócio</strong>
-
               <span>
                 Informe a URL da imagem da sua logo
                 abaixo.
@@ -280,7 +286,6 @@ export default function Perfil({
           </div>
 
           <div className="perfil-form-grid">
-            {/* NOME DO NEGÓCIO */}
             <label className="perfil-field perfil-field-full">
               <span>Nome do negócio</span>
 
@@ -301,7 +306,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* NOME DA PROFISSIONAL */}
             <label className="perfil-field">
               <span>Seu nome</span>
 
@@ -322,7 +326,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* TELEFONE */}
             <label className="perfil-field">
               <span>Telefone / WhatsApp</span>
 
@@ -343,7 +346,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* INSTAGRAM */}
             <label className="perfil-field">
               <span>Instagram</span>
 
@@ -366,7 +368,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* CIDADE */}
             <label className="perfil-field">
               <span>Cidade</span>
 
@@ -387,7 +388,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* ENDEREÇO */}
             <label className="perfil-field perfil-field-full">
               <span>Endereço</span>
 
@@ -408,7 +408,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* DESCRIÇÃO */}
             <label className="perfil-field perfil-field-full">
               <span>Descrição do negócio</span>
 
@@ -429,7 +428,6 @@ export default function Perfil({
               </div>
             </label>
 
-            {/* LOGO URL */}
             <label className="perfil-field perfil-field-full">
               <span>URL da logo</span>
 
@@ -449,7 +447,6 @@ export default function Perfil({
           </div>
         </section>
 
-        {/* PERSONALIZAÇÃO */}
         <section className="perfil-card">
           <div className="perfil-card-header">
             <div className="perfil-card-icon">
@@ -506,7 +503,6 @@ export default function Perfil({
           </div>
         </section>
 
-        {/* CONTA */}
         <section className="perfil-card">
           <div className="perfil-card-header">
             <div className="perfil-card-icon">
@@ -537,14 +533,12 @@ export default function Perfil({
               onClick={sair}
             >
               <LogOut size={17} />
-
               Sair da conta
             </button>
           </div>
         </section>
       </div>
 
-      {/* SALVAR */}
       <div className="perfil-footer">
         <button
           type="button"

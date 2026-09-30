@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "./lib/supabase";
+import { aplicarCor, COR_PADRAO } from "./lib/tema";
 
 import {
   BottomNav,
@@ -50,6 +51,28 @@ export default function App() {
     );
   }, [page]);
 
+  async function carregarTema(userId: string) {
+    const { data, error } = await supabase
+      .from("configuracoes_negocio")
+      .select("cor_principal")
+      .eq("profissional_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "Erro ao carregar tema:",
+        error
+      );
+
+      aplicarCor(COR_PADRAO);
+      return;
+    }
+
+    aplicarCor(
+      data?.cor_principal ?? COR_PADRAO
+    );
+  }
+
   useEffect(() => {
     let montado = true;
 
@@ -71,9 +94,15 @@ export default function App() {
         setPage(
           paginaSalva || "inicio"
         );
+
+        await carregarTema(session.user.id);
+      } else {
+        aplicarCor(COR_PADRAO);
       }
 
-      setCarregandoSessao(false);
+      if (montado) {
+        setCarregandoSessao(false);
+      }
     }
 
     verificarSessao();
@@ -93,9 +122,16 @@ export default function App() {
           setPage(
             paginaSalva || "inicio"
           );
+
+          // Evita chamadas assíncronas diretamente
+          // dentro do callback do Supabase Auth.
+          setTimeout(() => {
+            carregarTema(session.user.id);
+          }, 0);
         } else {
           setTela("inicio");
           setPage("inicio");
+          aplicarCor(COR_PADRAO);
         }
       }
     );
