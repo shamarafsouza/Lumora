@@ -16,7 +16,20 @@ type Cliente = {
   created_at: string;
 };
 
-export function Clientes() {
+type ClientesProps = {
+  onNavigate: (
+    page:
+      | "agenda"
+      | "financeiro"
+      | "servicos"
+      | "clientes"
+      | "perfil"
+  ) => void;
+};
+
+export function Clientes({
+  onNavigate,
+}: ClientesProps) {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -114,19 +127,19 @@ export function Clientes() {
       .select()
       .single();
 
-        if (error) {
-          console.error("ERRO SUPABASE:", error);
+    if (error) {
+      console.error("ERRO SUPABASE:", error);
 
-          setErro(
-            error.message ||
-              error.details ||
-              error.hint ||
-              "Não foi possível cadastrar a cliente."
-          );
+      setErro(
+        error.message ||
+          error.details ||
+          error.hint ||
+          "Não foi possível cadastrar a cliente."
+      );
 
-          setSalvando(false);
-          return;
-        }
+      setSalvando(false);
+      return;
+    }
 
     setClientes((atual) =>
       [...atual, data].sort((a, b) =>
@@ -156,7 +169,15 @@ export function Clientes() {
           <p>Lista de Clientes Cadastradas</p>
         </div>
 
-        <div className="avatar">LU</div>
+        <button
+          type="button"
+          className="avatar page-avatar-button"
+          onClick={() => onNavigate("perfil")}
+          aria-label="Abrir perfil"
+          title="Perfil"
+        >
+          LU
+        </button>
       </header>
 
       <div className="clients-title">
