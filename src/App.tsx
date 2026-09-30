@@ -44,6 +44,27 @@ export default function App() {
       return paginaSalva || "inicio";
     });
 
+  /*
+   * Guarda a página em que a profissional estava
+   * antes de abrir o Perfil.
+   *
+   * Assim:
+   *
+   * Serviços → Perfil → Voltar → Serviços
+   * Agenda → Perfil → Voltar → Agenda
+   * Financeiro → Perfil → Voltar → Financeiro
+   * Clientes → Perfil → Voltar → Clientes
+   */
+  const [paginaAnterior, setPaginaAnterior] =
+    useState<Page>(() => {
+      const paginaSalva =
+        localStorage.getItem(
+          "lumora-pagina-anterior"
+        ) as Page | null;
+
+      return paginaSalva || "inicio";
+    });
+
   const [
     modoNovaSenha,
     setModoNovaSenha,
@@ -55,7 +76,7 @@ export default function App() {
   ] = useState(true);
 
   /* =====================================================
-     SALVAR PÁGINA
+     SALVAR PÁGINA ATUAL
      ===================================================== */
 
   useEffect(() => {
@@ -66,21 +87,72 @@ export default function App() {
   }, [page]);
 
   /* =====================================================
+     SALVAR PÁGINA ANTERIOR
+     ===================================================== */
+
+  useEffect(() => {
+    localStorage.setItem(
+      "lumora-pagina-anterior",
+      paginaAnterior
+    );
+  }, [paginaAnterior]);
+
+  /* =====================================================
+     NAVEGAÇÃO INTERNA
+     ===================================================== */
+
+  function navegar(novaPagina: Page) {
+    /*
+     * Quando abrir o Perfil, guarda a tela atual.
+     *
+     * Não sobrescreve a página anterior se já
+     * estivermos no Perfil.
+     */
+    if (
+      novaPagina === "perfil" &&
+      page !== "perfil"
+    ) {
+      setPaginaAnterior(page);
+    }
+
+    setPage(novaPagina);
+  }
+
+  /* =====================================================
+     VOLTAR DO PERFIL
+     ===================================================== */
+
+  function voltarDoPerfil() {
+    /*
+     * Se por algum motivo a página anterior também
+     * for Perfil, usamos Início como segurança.
+     */
+    const destino =
+      paginaAnterior === "perfil"
+        ? "inicio"
+        : paginaAnterior;
+
+    setPage(destino);
+  }
+
+  /* =====================================================
      CARREGAR TEMA
      ===================================================== */
 
   async function carregarTema(
     userId: string
   ) {
-    const { data, error } =
-      await supabase
-        .from("configuracoes_negocio")
-        .select("cor_principal")
-        .eq(
-          "profissional_id",
-          userId
-        )
-        .maybeSingle();
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("configuracoes_negocio")
+      .select("cor_principal")
+      .eq(
+        "profissional_id",
+        userId
+      )
+      .maybeSingle();
 
     if (error) {
       console.error(
@@ -108,7 +180,8 @@ export default function App() {
     async function verificarSessao() {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } =
+        await supabase.auth.getSession();
 
       if (!montado) {
         return;
@@ -122,6 +195,12 @@ export default function App() {
             "lumora-pagina"
           ) as Page | null;
 
+        /*
+         * Se existir uma página salva, usamos ela.
+         *
+         * Caso não exista, o dashboard é a tela
+         * inicial da área interna.
+         */
         setPage(
           paginaSalva || "inicio"
         );
@@ -155,7 +234,6 @@ export default function App() {
           ) {
             setModoNovaSenha(true);
             setTela("login");
-
             setCarregandoSessao(false);
 
             return;
@@ -179,6 +257,11 @@ export default function App() {
 
             setModoNovaSenha(false);
 
+            /*
+             * Evita fazer uma operação assíncrona
+             * diretamente dentro do callback do
+             * Supabase.
+             */
             setTimeout(() => {
               carregarTema(
                 session.user.id
@@ -187,6 +270,7 @@ export default function App() {
           } else {
             setTela("inicio");
             setPage("inicio");
+            setPaginaAnterior("inicio");
             setModoNovaSenha(false);
 
             aplicarCor(COR_PADRAO);
@@ -283,23 +367,16 @@ export default function App() {
   }
 
   /* =====================================================
-     NAVEGAÇÃO INTERNA
+     ÁREA INTERNA DO LUMORA
      ===================================================== */
-
-  function navegar(
-    novaPagina:
-      | "agenda"
-      | "financeiro"
-      | "servicos"
-      | "clientes"
-      | "perfil"
-  ) {
-    setPage(novaPagina);
-  }
 
   return (
     <div className="app">
       <div className="mobile-shell">
+
+        {/* =========================================
+            INÍCIO / DASHBOARD
+            ========================================= */}
 
         {page === "inicio" && (
           <Dashboard
@@ -307,11 +384,19 @@ export default function App() {
           />
         )}
 
+        {/* =========================================
+            AGENDA
+            ========================================= */}
+
         {page === "agenda" && (
           <Agenda
             onNavigate={navegar}
           />
         )}
+
+        {/* =========================================
+            FINANCEIRO
+            ========================================= */}
 
         {page === "financeiro" && (
           <Financeiro
@@ -319,11 +404,19 @@ export default function App() {
           />
         )}
 
+        {/* =========================================
+            SERVIÇOS
+            ========================================= */}
+
         {page === "servicos" && (
           <Servicos
             onNavigate={navegar}
           />
         )}
+
+        {/* =========================================
+            CLIENTES
+            ========================================= */}
 
         {page === "clientes" && (
           <Clientes
@@ -331,18 +424,26 @@ export default function App() {
           />
         )}
 
+        {/* =========================================
+            PERFIL
+            ========================================= */}
+
         {page === "perfil" && (
           <Perfil
-            onVoltar={() =>
-              setPage("inicio")
+            onVoltar={
+              voltarDoPerfil
             }
           />
         )}
 
+        {/* =========================================
+            MENU INFERIOR
+            ========================================= */}
+
         {page !== "perfil" && (
           <BottomNav
             page={page}
-            onChange={setPage}
+            onChange={navegar}
           />
         )}
 
