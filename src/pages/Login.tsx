@@ -7,7 +7,6 @@ import {
   LoaderCircle,
   Mail,
 } from "lucide-react";
-
 import { supabase } from "../lib/supabase";
 
 type LoginProps = {
@@ -23,39 +22,25 @@ export function Login({
   modoCadastro = false,
   modoNovaSenha = false,
 }: LoginProps) {
-  const [cadastro, setCadastro] =
-    useState(modoCadastro);
+  const [cadastro, setCadastro] = useState(modoCadastro);
 
-  const [recuperacao, setRecuperacao] =
-    useState(false);
+  const [recuperacao, setRecuperacao] = useState(false);
 
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] =
-    useState("");
+  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
 
-  const [senha, setSenha] =
-    useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
 
-  const [confirmarSenha, setConfirmarSenha] =
-    useState("");
-
-  const [mostrarSenha, setMostrarSenha] =
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] =
     useState(false);
 
-  const [
-    mostrarConfirmarSenha,
-    setMostrarConfirmarSenha,
-  ] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
-  const [carregando, setCarregando] =
-    useState(false);
-
-  const [erro, setErro] =
-    useState("");
-
-  const [sucesso, setSucesso] =
-    useState("");
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   /* =====================================================
      LOGIN
@@ -66,9 +51,7 @@ export function Login({
     setSucesso("");
 
     if (!email.trim() || !senha) {
-      setErro(
-        "Preencha seu e-mail e sua senha."
-      );
+      setErro("Preencha seu e-mail e sua senha.");
       return;
     }
 
@@ -82,8 +65,7 @@ export function Login({
 
     if (error) {
       setErro(
-        error.message ===
-          "Invalid login credentials"
+        error.message === "Invalid login credentials"
           ? "E-mail ou senha incorretos."
           : error.message
       );
@@ -151,8 +133,7 @@ export function Login({
           .insert({
             id: data.user.id,
             nome: nome.trim(),
-            telefone:
-              telefone.trim() || null,
+            telefone: telefone.trim() || null,
           });
 
       if (
@@ -198,12 +179,15 @@ export function Login({
 
     setCarregando(true);
 
+    const siteUrl =
+      import.meta.env.VITE_SITE_URL ||
+      window.location.origin;
+
     const { error } =
       await supabase.auth.resetPasswordForEmail(
         email.trim(),
         {
-          redirectTo:
-            `${window.location.origin}/`,
+          redirectTo: siteUrl,
         }
       );
 
@@ -316,7 +300,6 @@ export function Login({
 
   function voltarParaLogin() {
     setRecuperacao(false);
-
     setCadastro(false);
 
     setErro("");
@@ -334,9 +317,7 @@ export function Login({
      ===================================================== */
 
   function alternarCadastro() {
-    setCadastro(
-      (atual) => !atual
-    );
+    setCadastro((atual) => !atual);
 
     setRecuperacao(false);
 
