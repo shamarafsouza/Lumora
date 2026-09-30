@@ -39,7 +39,18 @@ const categoriasPadrao = [
   "Outros",
 ];
 
-export function Servicos() {
+type ServicosProps = {
+  onNavigate: (
+    page:
+      | "agenda"
+      | "financeiro"
+      | "servicos"
+      | "clientes"
+      | "perfil"
+  ) => void;
+};
+
+export function Servicos({ onNavigate }: ServicosProps) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [produtosSelecionados, setProdutosSelecionados] = useState<string[]>([]);
@@ -456,7 +467,15 @@ export function Servicos() {
           <p>Catálogo de Serviços</p>
         </div>
 
-        <div className="avatar">LU</div>
+        <button
+          type="button"
+          className="avatar page-avatar-button"
+          onClick={() => onNavigate("perfil")}
+          aria-label="Abrir perfil"
+          title="Perfil"
+        >
+          LU
+        </button>
       </header>
 
       <div className="services-title">
