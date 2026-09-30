@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
-
 import { supabase } from "../lib/supabase";
 
 type CabecalhoProfissionalProps = {
@@ -14,8 +13,8 @@ export function CabecalhoProfissional({
   children,
   onPerfil,
 }: CabecalhoProfissionalProps) {
-  const [nome, setNome] = useState("Você");
-  const [carregando, setCarregando] = useState(true);
+  const [nome, setNome] = useState("Lumora");
+  const [iniciais, setIniciais] = useState("LU");
 
   useEffect(() => {
     let montado = true;
@@ -25,12 +24,7 @@ export function CabecalhoProfissional({
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        if (montado) {
-          setCarregando(false);
-        }
-        return;
-      }
+      if (!user) return;
 
       const { data, error } = await supabase
         .from("profiles")
@@ -45,15 +39,26 @@ export function CabecalhoProfissional({
         );
       }
 
-      if (montado) {
-        setNome(
-          data?.nome?.trim() ||
-            user.user_metadata?.nome?.trim() ||
-            "Você"
-        );
+      if (!montado) return;
 
-        setCarregando(false);
-      }
+      const nomePerfil =
+        data?.nome?.trim() ||
+        user.user_metadata?.nome?.trim() ||
+        "Lumora";
+
+      setNome(nomePerfil);
+
+      const letras = nomePerfil
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((parte) =>
+          parte.charAt(0).toUpperCase()
+        )
+        .join("");
+
+      setIniciais(letras || "LU");
     }
 
     carregarPerfil();
@@ -63,34 +68,25 @@ export function CabecalhoProfissional({
     };
   }, []);
 
-  const iniciais = nome
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte.charAt(0).toUpperCase())
-    .join("");
-
   return (
-    <header className="cabecalho-profissional">
-      <div className="cabecalho-profissional-info">
-        <h1>
-          {carregando ? "..." : nome}
-        </h1>
+    <header className="top">
+      <div>
+        <h1>{nome}</h1>
 
         {subtitulo && (
           <p>{subtitulo}</p>
         )}
       </div>
 
-      <div className="cabecalho-profissional-acoes">
+      <div className="page-header-actions">
         {children}
 
         <button
           type="button"
-          className="cabecalho-profissional-avatar"
+          className="avatar page-avatar-button"
           onClick={onPerfil}
-          aria-label="Abrir meu perfil"
+          aria-label="Abrir perfil"
+          title="Perfil"
         >
           {iniciais || (
             <UserRound size={18} />
