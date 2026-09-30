@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "./lib/supabase";
-import { aplicarCor, COR_PADRAO } from "./lib/tema";
+import {
+  aplicarCor,
+  COR_PADRAO,
+} from "./lib/tema";
 
 import {
   BottomNav,
@@ -41,8 +44,19 @@ export default function App() {
       return paginaSalva || "inicio";
     });
 
-  const [carregandoSessao, setCarregandoSessao] =
-    useState(true);
+  const [
+    modoNovaSenha,
+    setModoNovaSenha,
+  ] = useState(false);
+
+  const [
+    carregandoSessao,
+    setCarregandoSessao,
+  ] = useState(true);
+
+  /* =====================================================
+     SALVAR PÁGINA
+     ===================================================== */
 
   useEffect(() => {
     localStorage.setItem(
@@ -51,12 +65,22 @@ export default function App() {
     );
   }, [page]);
 
-  async function carregarTema(userId: string) {
-    const { data, error } = await supabase
-      .from("configuracoes_negocio")
-      .select("cor_principal")
-      .eq("profissional_id", userId)
-      .maybeSingle();
+  /* =====================================================
+     CARREGAR TEMA
+     ===================================================== */
+
+  async function carregarTema(
+    userId: string
+  ) {
+    const { data, error } =
+      await supabase
+        .from("configuracoes_negocio")
+        .select("cor_principal")
+        .eq(
+          "profissional_id",
+          userId
+        )
+        .maybeSingle();
 
     if (error) {
       console.error(
@@ -69,9 +93,14 @@ export default function App() {
     }
 
     aplicarCor(
-      data?.cor_principal ?? COR_PADRAO
+      data?.cor_principal ??
+        COR_PADRAO
     );
   }
+
+  /* =====================================================
+     SESSÃO / AUTH
+     ===================================================== */
 
   useEffect(() => {
     let montado = true;
@@ -81,7 +110,9 @@ export default function App() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!montado) return;
+      if (!montado) {
+        return;
+      }
 
       if (session) {
         setTela("app");
@@ -95,7 +126,9 @@ export default function App() {
           paginaSalva || "inicio"
         );
 
-        await carregarTema(session.user.id);
+        await carregarTema(
+          session.user.id
+        );
       } else {
         aplicarCor(COR_PADRAO);
       }
@@ -109,38 +142,67 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          setTela("app");
+    } =
+      supabase.auth.onAuthStateChange(
+        (event, session) => {
+          /* =========================================
+             RECUPERAÇÃO DE SENHA
+             ========================================= */
 
-          const paginaSalva =
-            localStorage.getItem(
-              "lumora-pagina"
-            ) as Page | null;
+          if (
+            event ===
+            "PASSWORD_RECOVERY"
+          ) {
+            setModoNovaSenha(true);
+            setTela("login");
 
-          setPage(
-            paginaSalva || "inicio"
-          );
+            setCarregandoSessao(false);
 
-          // Evita chamadas assíncronas diretamente
-          // dentro do callback do Supabase Auth.
-          setTimeout(() => {
-            carregarTema(session.user.id);
-          }, 0);
-        } else {
-          setTela("inicio");
-          setPage("inicio");
-          aplicarCor(COR_PADRAO);
+            return;
+          }
+
+          /* =========================================
+             LOGIN NORMAL
+             ========================================= */
+
+          if (session) {
+            setTela("app");
+
+            const paginaSalva =
+              localStorage.getItem(
+                "lumora-pagina"
+              ) as Page | null;
+
+            setPage(
+              paginaSalva || "inicio"
+            );
+
+            setModoNovaSenha(false);
+
+            setTimeout(() => {
+              carregarTema(
+                session.user.id
+              );
+            }, 0);
+          } else {
+            setTela("inicio");
+            setPage("inicio");
+            setModoNovaSenha(false);
+
+            aplicarCor(COR_PADRAO);
+          }
         }
-      }
-    );
+      );
 
     return () => {
       montado = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  /* =====================================================
+     CARREGANDO
+     ===================================================== */
 
   if (carregandoSessao) {
     return (
@@ -151,10 +213,16 @@ export default function App() {
 
         <strong>LUMORA</strong>
 
-        <span>Carregando...</span>
+        <span>
+          Carregando...
+        </span>
       </div>
     );
   }
+
+  /* =====================================================
+     LANDING
+     ===================================================== */
 
   if (tela === "inicio") {
     return (
@@ -173,6 +241,10 @@ export default function App() {
     );
   }
 
+  /* =====================================================
+     LOGIN / CADASTRO / RECUPERAÇÃO
+     ===================================================== */
+
   if (
     tela === "login" ||
     tela === "cadastro"
@@ -184,10 +256,15 @@ export default function App() {
             modoCadastro={
               tela === "cadastro"
             }
-            onVoltar={() =>
-              setTela("inicio")
+            modoNovaSenha={
+              modoNovaSenha
             }
+            onVoltar={() => {
+              setModoNovaSenha(false);
+              setTela("inicio");
+            }}
             onLogin={() => {
+              setModoNovaSenha(false);
               setTela("app");
 
               const paginaSalva =
@@ -204,6 +281,10 @@ export default function App() {
       </div>
     );
   }
+
+  /* =====================================================
+     NAVEGAÇÃO INTERNA
+     ===================================================== */
 
   function navegar(
     novaPagina:
