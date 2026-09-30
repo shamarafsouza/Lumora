@@ -85,7 +85,11 @@ function dataLocal(iso: string) {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
-const Financeiro = () => {
+const Financeiro = ({
+  onNavigate,
+}: {
+  onNavigate: (page: "perfil") => void;
+}) => {
   const [lancamentos, setLancamentos] = useState<
     LancamentoFinanceiro[]
   >([]);
@@ -563,7 +567,15 @@ const Financeiro = () => {
           <p>Fluxo de caixa do seu negócio.</p>
         </div>
 
-        <div className="avatar">LU</div>
+        <button
+          type="button"
+          className="avatar page-avatar-button"
+          onClick={() => onNavigate("perfil")}
+          aria-label="Abrir perfil"
+          title="Perfil"
+        >
+          LU
+        </button>
       </header>
 
       <section className="financeiro-resumo">

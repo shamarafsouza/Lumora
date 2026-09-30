@@ -140,7 +140,11 @@ function nomeStatus(status: Agendamento["status"]) {
   return "Confirmado";
 }
 
-export function Agenda() {
+export function Agenda({
+  onNavigate,
+}: {
+  onNavigate: (page: "perfil") => void;
+}) {
   const hoje = useMemo(() => {
     const data = new Date();
     data.setHours(0, 0, 0, 0);
@@ -1077,9 +1081,15 @@ export function Agenda() {
             <Plus size={20} />
           </button>
 
-          <div className="avatar">
+          <button
+            type="button"
+            className="avatar page-avatar-button"
+            onClick={() => onNavigate("perfil")}
+            aria-label="Abrir perfil"
+            title="Perfil"
+          >
             LU
-          </div>
+          </button>
         </div>
       </header>
 
