@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  CheckCircle2,
   Eye,
   EyeOff,
   LoaderCircle,
   Mail,
-  CheckCircle2,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
@@ -14,7 +14,6 @@ type LoginProps = {
   onVoltar: () => void;
   onLogin: () => void;
   modoCadastro?: boolean;
-  modoRecuperacao?: boolean;
   modoNovaSenha?: boolean;
 };
 
@@ -22,40 +21,54 @@ export function Login({
   onVoltar,
   onLogin,
   modoCadastro = false,
-  modoRecuperacao = false,
   modoNovaSenha = false,
 }: LoginProps) {
-  const [cadastro, setCadastro] = useState(modoCadastro);
+  const [cadastro, setCadastro] =
+    useState(modoCadastro);
+
   const [recuperacao, setRecuperacao] =
-    useState(modoRecuperacao);
-  const [novaSenha, setNovaSenha] =
-    useState(modoNovaSenha);
+    useState(false);
 
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
+  const [telefone, setTelefone] =
+    useState("");
   const [email, setEmail] = useState("");
 
-  const [senha, setSenha] = useState("");
+  const [senha, setSenha] =
+    useState("");
+
   const [confirmarSenha, setConfirmarSenha] =
     useState("");
 
   const [mostrarSenha, setMostrarSenha] =
     useState(false);
-  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] =
-    useState(false);
+
+  const [
+    mostrarConfirmarSenha,
+    setMostrarConfirmarSenha,
+  ] = useState(false);
 
   const [carregando, setCarregando] =
     useState(false);
 
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+  const [erro, setErro] =
+    useState("");
+
+  const [sucesso, setSucesso] =
+    useState("");
+
+  /* =====================================================
+     LOGIN
+     ===================================================== */
 
   async function entrar() {
     setErro("");
     setSucesso("");
 
     if (!email.trim() || !senha) {
-      setErro("Preencha seu e-mail e sua senha.");
+      setErro(
+        "Preencha seu e-mail e sua senha."
+      );
       return;
     }
 
@@ -85,6 +98,10 @@ export function Login({
 
     setCarregando(false);
   }
+
+  /* =====================================================
+     CADASTRO
+     ===================================================== */
 
   async function criarConta() {
     setErro("");
@@ -134,7 +151,8 @@ export function Login({
           .insert({
             id: data.user.id,
             nome: nome.trim(),
-            telefone: telefone.trim() || null,
+            telefone:
+              telefone.trim() || null,
           });
 
       if (
@@ -150,7 +168,9 @@ export function Login({
       }
 
       setCarregando(false);
+
       onLogin();
+
       return;
     }
 
@@ -160,6 +180,10 @@ export function Login({
 
     setCarregando(false);
   }
+
+  /* =====================================================
+     ENVIAR E-MAIL DE RECUPERAÇÃO
+     ===================================================== */
 
   async function enviarRecuperacao() {
     setErro("");
@@ -179,11 +203,16 @@ export function Login({
         email.trim(),
         {
           redirectTo:
-            `${window.location.origin}/?recuperar-senha=true`,
+            `${window.location.origin}/`,
         }
       );
 
     if (error) {
+      console.error(
+        "Erro na recuperação:",
+        error
+      );
+
       setErro(
         "Não foi possível enviar o e-mail de recuperação. Verifique o endereço informado."
       );
@@ -199,6 +228,10 @@ export function Login({
     setCarregando(false);
   }
 
+  /* =====================================================
+     ALTERAR NOVA SENHA
+     ===================================================== */
+
   async function atualizarSenha() {
     setErro("");
     setSucesso("");
@@ -211,7 +244,9 @@ export function Login({
     }
 
     if (senha !== confirmarSenha) {
-      setErro("As senhas não coincidem.");
+      setErro(
+        "As senhas não coincidem."
+      );
       return;
     }
 
@@ -223,6 +258,11 @@ export function Login({
       });
 
     if (error) {
+      console.error(
+        "Erro ao atualizar senha:",
+        error
+      );
+
       setErro(
         "Não foi possível alterar sua senha. Tente novamente."
       );
@@ -241,6 +281,10 @@ export function Login({
     setCarregando(false);
   }
 
+  /* =====================================================
+     SUBMIT
+     ===================================================== */
+
   async function enviarFormulario(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -248,7 +292,7 @@ export function Login({
 
     if (carregando) return;
 
-    if (novaSenha) {
+    if (modoNovaSenha) {
       await atualizarSenha();
       return;
     }
@@ -266,24 +310,39 @@ export function Login({
     await entrar();
   }
 
+  /* =====================================================
+     VOLTAR PARA LOGIN
+     ===================================================== */
+
   function voltarParaLogin() {
     setRecuperacao(false);
-    setNovaSenha(false);
+
     setCadastro(false);
 
     setErro("");
     setSucesso("");
+
     setSenha("");
     setConfirmarSenha("");
+
+    setMostrarSenha(false);
+    setMostrarConfirmarSenha(false);
   }
 
+  /* =====================================================
+     ALTERNAR LOGIN / CADASTRO
+     ===================================================== */
+
   function alternarCadastro() {
-    setCadastro((atual) => !atual);
+    setCadastro(
+      (atual) => !atual
+    );
+
     setRecuperacao(false);
-    setNovaSenha(false);
 
     setErro("");
     setSucesso("");
+
     setSenha("");
     setConfirmarSenha("");
   }
@@ -292,7 +351,7 @@ export function Login({
      NOVA SENHA
      ===================================================== */
 
-  if (novaSenha) {
+  if (modoNovaSenha) {
     return (
       <main className="auth-page">
         <button
@@ -301,7 +360,7 @@ export function Login({
           onClick={onVoltar}
         >
           <ArrowLeft size={18} />
-          Voltar
+          <span>Voltar</span>
         </button>
 
         <div className="auth-card">
@@ -323,8 +382,8 @@ export function Login({
             </h1>
 
             <p>
-              Escolha uma nova senha para continuar
-              usando o Lumora.
+              Escolha uma nova senha para
+              continuar usando o Lumora.
             </p>
           </div>
 
@@ -345,7 +404,9 @@ export function Login({
                   placeholder="Digite sua nova senha"
                   value={senha}
                   onChange={(event) =>
-                    setSenha(event.target.value)
+                    setSenha(
+                      event.target.value
+                    )
                   }
                   autoComplete="new-password"
                 />
@@ -369,7 +430,9 @@ export function Login({
             </label>
 
             <label className="auth-field">
-              <span>Confirmar nova senha</span>
+              <span>
+                Confirmar nova senha
+              </span>
 
               <div className="password-field">
                 <input
@@ -415,7 +478,7 @@ export function Login({
             {sucesso && (
               <div className="auth-message auth-success">
                 <CheckCircle2 size={16} />
-                {sucesso}
+                <span>{sucesso}</span>
               </div>
             )}
 
@@ -442,9 +505,11 @@ export function Login({
             <button
               type="button"
               className="auth-recovery-back"
-              onClick={voltarParaLogin}
+              onClick={() => {
+                onLogin();
+              }}
             >
-              Voltar para o login
+              Voltar para o Lumora
             </button>
           )}
         </div>
@@ -465,7 +530,7 @@ export function Login({
           onClick={onVoltar}
         >
           <ArrowLeft size={18} />
-          Voltar
+          <span>Voltar</span>
         </button>
 
         <div className="auth-card">
@@ -487,8 +552,9 @@ export function Login({
             </h1>
 
             <p>
-              Informe seu e-mail e enviaremos um
-              link para você criar uma nova senha.
+              Informe seu e-mail e enviaremos
+              um link para você criar uma nova
+              senha.
             </p>
           </div>
 
@@ -507,7 +573,9 @@ export function Login({
                   placeholder="seuemail@email.com"
                   value={email}
                   onChange={(event) =>
-                    setEmail(event.target.value)
+                    setEmail(
+                      event.target.value
+                    )
                   }
                   autoComplete="email"
                 />
@@ -617,7 +685,9 @@ export function Login({
                   placeholder="Seu nome"
                   value={nome}
                   onChange={(event) =>
-                    setNome(event.target.value)
+                    setNome(
+                      event.target.value
+                    )
                   }
                   autoComplete="name"
                 />
@@ -631,7 +701,9 @@ export function Login({
                   placeholder="(00) 00000-0000"
                   value={telefone}
                   onChange={(event) =>
-                    setTelefone(event.target.value)
+                    setTelefone(
+                      event.target.value
+                    )
                   }
                   autoComplete="tel"
                 />
@@ -647,7 +719,9 @@ export function Login({
               placeholder="seuemail@email.com"
               value={email}
               onChange={(event) =>
-                setEmail(event.target.value)
+                setEmail(
+                  event.target.value
+                )
               }
               autoComplete="email"
             />
@@ -666,7 +740,9 @@ export function Login({
                 placeholder="Digite sua senha"
                 value={senha}
                 onChange={(event) =>
-                  setSenha(event.target.value)
+                  setSenha(
+                    event.target.value
+                  )
                 }
                 autoComplete={
                   cadastro
@@ -701,7 +777,8 @@ export function Login({
 
           {sucesso && (
             <div className="auth-message auth-success">
-              {sucesso}
+              <CheckCircle2 size={16} />
+              <span>{sucesso}</span>
             </div>
           )}
 
