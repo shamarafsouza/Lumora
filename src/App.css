@@ -2517,6 +2517,7 @@ body {
 }
 
 .perfil-input-icon {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -2535,6 +2536,7 @@ body {
 }
 
 .perfil-input-icon input {
+  min-width: 0;
   width: 100%;
   border: 0;
   outline: 0;
@@ -2771,13 +2773,14 @@ body {
   }
 }
 
-@media (max-width: 700px) {
+@container (max-width: 700px) {
   .perfil-page {
-    padding: 20px 16px 90px;
+    padding: 16px 12px 90px;
   }
 
   .perfil-form-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .perfil-field-full {
@@ -2785,7 +2788,7 @@ body {
   }
 
   .perfil-card {
-    padding: 19px;
+    padding: 18px;
     border-radius: 16px;
   }
 
@@ -2870,6 +2873,7 @@ body {
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  container-type: inline-size;
 }
 
 .mobile-shell .bottom-nav {
