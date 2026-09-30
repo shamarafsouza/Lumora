@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { UserRound } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type CabecalhoProfissionalProps = {
   subtitulo?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   onPerfil?: () => void;
 };
 
@@ -24,7 +24,9 @@ export function CabecalhoProfissional({
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        return;
+      }
 
       const { data, error } = await supabase
         .from("profiles")
@@ -39,7 +41,9 @@ export function CabecalhoProfissional({
         );
       }
 
-      if (!montado) return;
+      if (!montado) {
+        return;
+      }
 
       const nomePerfil =
         data?.nome?.trim() ||
@@ -48,12 +52,14 @@ export function CabecalhoProfissional({
 
       setNome(nomePerfil);
 
-      const letras = nomePerfil
+      const partes: string[] = nomePerfil
         .trim()
         .split(/\s+/)
         .filter(Boolean)
-        .slice(0, 2)
-        .map((parte) =>
+        .slice(0, 2);
+
+      const letras = partes
+        .map((parte: string) =>
           parte.charAt(0).toUpperCase()
         )
         .join("");
