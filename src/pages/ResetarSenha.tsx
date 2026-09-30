@@ -53,6 +53,7 @@ export function ResetarSenha({
         setErro("");
       } else {
         setSessaoValida(false);
+
         setErro(
           "O link de recuperação é inválido ou expirou. Solicite um novo link."
         );
@@ -134,16 +135,24 @@ export function ResetarSenha({
     setSenha("");
     setConfirmarSenha("");
 
+    setCarregando(false);
+
+    /*
+     * Mostra a mensagem de sucesso.
+     */
     setSucesso(
-      "Sua senha foi alterada com sucesso!"
+      "Senha resetada com sucesso!"
     );
 
-    setCarregando(false);
-  }
-
-  async function voltarLogin() {
-    await supabase.auth.signOut();
-    onVoltar();
+    /*
+     * Depois de 2 segundos, encerra a sessão
+     * de recuperação e volta automaticamente
+     * para a tela de login.
+     */
+    setTimeout(async () => {
+      await supabase.auth.signOut();
+      onVoltar();
+    }, 2000);
   }
 
   return (
@@ -172,12 +181,15 @@ export function ResetarSenha({
           </span>
 
           <h1>
-            Crie uma nova senha
+            {sucesso
+              ? "Tudo certo!"
+              : "Crie uma nova senha"}
           </h1>
 
           <p>
-            Escolha uma nova senha para
-            continuar usando o Lumora.
+            {sucesso
+              ? "Sua senha foi atualizada. Você será redirecionada para o login."
+              : "Escolha uma nova senha para continuar usando o Lumora."}
           </p>
         </div>
 
@@ -308,21 +320,25 @@ export function ResetarSenha({
         ) : (
           <div className="auth-form">
             <div className="auth-message auth-success">
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={20} />
 
               <span>
-                Sua senha foi alterada com
-                sucesso!
+                Senha resetada com sucesso!
               </span>
             </div>
 
-            <button
-              type="button"
-              className="auth-submit"
-              onClick={voltarLogin}
+            <p
+              style={{
+                margin: 0,
+                textAlign: "center",
+                fontFamily:
+                  '"DM Sans", sans-serif',
+                fontSize: "12px",
+                color: "var(--muted)",
+              }}
             >
-              Voltar para o login
-            </button>
+              Redirecionando para o login...
+            </p>
           </div>
         )}
       </div>

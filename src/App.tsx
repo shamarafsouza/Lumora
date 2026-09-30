@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "./lib/supabase";
+
 import {
   aplicarCor,
   COR_PADRAO,
@@ -20,6 +21,7 @@ import Perfil from "./pages/Perfil";
 
 import { Inicio } from "./pages/Inicio";
 import { Login } from "./pages/Login";
+import { ResetarSenha } from "./pages/ResetarSenha";
 
 import "./App.css";
 import "./pages/Auth.css";
@@ -28,6 +30,7 @@ type Tela =
   | "inicio"
   | "login"
   | "cadastro"
+  | "resetar-senha"
   | "app";
 
 export default function App() {
@@ -55,6 +58,7 @@ export default function App() {
    * Financeiro → Perfil → Voltar → Financeiro
    * Clientes → Perfil → Voltar → Clientes
    */
+
   const [paginaAnterior, setPaginaAnterior] =
     useState<Page>(() => {
       const paginaSalva =
@@ -64,11 +68,6 @@ export default function App() {
 
       return paginaSalva || "inicio";
     });
-
-  const [
-    modoNovaSenha,
-    setModoNovaSenha,
-  ] = useState(false);
 
   const [
     carregandoSessao,
@@ -108,6 +107,7 @@ export default function App() {
      * Não sobrescreve a página anterior se já
      * estivermos no Perfil.
      */
+
     if (
       novaPagina === "perfil" &&
       page !== "perfil"
@@ -127,6 +127,7 @@ export default function App() {
      * Se por algum motivo a página anterior também
      * for Perfil, usamos Início como segurança.
      */
+
     const destino =
       paginaAnterior === "perfil"
         ? "inicio"
@@ -201,6 +202,7 @@ export default function App() {
          * Caso não exista, o dashboard é a tela
          * inicial da área interna.
          */
+
         setPage(
           paginaSalva || "inicio"
         );
@@ -232,8 +234,7 @@ export default function App() {
             event ===
             "PASSWORD_RECOVERY"
           ) {
-            setModoNovaSenha(true);
-            setTela("login");
+            setTela("resetar-senha");
             setCarregandoSessao(false);
 
             return;
@@ -255,13 +256,12 @@ export default function App() {
               paginaSalva || "inicio"
             );
 
-            setModoNovaSenha(false);
-
             /*
              * Evita fazer uma operação assíncrona
              * diretamente dentro do callback do
              * Supabase.
              */
+
             setTimeout(() => {
               carregarTema(
                 session.user.id
@@ -271,7 +271,6 @@ export default function App() {
             setTela("inicio");
             setPage("inicio");
             setPaginaAnterior("inicio");
-            setModoNovaSenha(false);
 
             aplicarCor(COR_PADRAO);
           }
@@ -326,7 +325,7 @@ export default function App() {
   }
 
   /* =====================================================
-     LOGIN / CADASTRO / RECUPERAÇÃO
+     LOGIN / CADASTRO
      ===================================================== */
 
   if (
@@ -340,15 +339,10 @@ export default function App() {
             modoCadastro={
               tela === "cadastro"
             }
-            modoNovaSenha={
-              modoNovaSenha
-            }
             onVoltar={() => {
-              setModoNovaSenha(false);
               setTela("inicio");
             }}
             onLogin={() => {
-              setModoNovaSenha(false);
               setTela("app");
 
               const paginaSalva =
@@ -359,6 +353,24 @@ export default function App() {
               setPage(
                 paginaSalva || "inicio"
               );
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  /* =====================================================
+     RESETAR SENHA
+     ===================================================== */
+
+  if (tela === "resetar-senha") {
+    return (
+      <div className="app">
+        <div className="mobile-shell">
+          <ResetarSenha
+            onVoltar={() => {
+              setTela("login");
             }}
           />
         </div>
@@ -446,7 +458,6 @@ export default function App() {
             onChange={navegar}
           />
         )}
-
       </div>
     </div>
   );

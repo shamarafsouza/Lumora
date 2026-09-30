@@ -617,3 +617,33 @@
     height: 47px;
   }
 }
+
+/* =========================================================
+   RESETAR SENHA
+   ========================================================= */
+
+.reset-password-page {
+  justify-content: flex-start;
+}
+
+.reset-password-card {
+  margin-top: 0;
+}
+
+.reset-password-form {
+  margin-top: 4px;
+}
+
+.reset-password-success {
+  margin-top: 4px;
+}
+
+.password-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.password-toggle:disabled:hover {
+  background: transparent;
+  color: #997d88;
+}
