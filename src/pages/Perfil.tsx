@@ -39,7 +39,11 @@ const configuracaoInicial: Omit<
   cor_principal: "#6f263d",
 };
 
-export default function Perfil() {
+export default function Perfil({
+  onVoltar,
+}: {
+  onVoltar: () => void;
+}) {
   const [config, setConfig] = useState(configuracaoInicial);
   const [usuarioId, setUsuarioId] = useState("");
   const [email, setEmail] = useState("");
@@ -190,6 +194,15 @@ export default function Perfil() {
 
   return (
     <main className="perfil-page">
+      <button
+        type="button"
+        className="perfil-voltar"
+        onClick={onVoltar}
+        aria-label="Voltar para o início"
+      >
+        ← Voltar
+      </button>
+
       <div className="perfil-header">
         <div>
           <span className="perfil-eyebrow">

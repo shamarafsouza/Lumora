@@ -33,7 +33,9 @@ export default function App() {
   const [page, setPage] =
     useState<Page>(() => {
       const paginaSalva =
-        localStorage.getItem("lumora-pagina") as Page | null;
+        localStorage.getItem(
+          "lumora-pagina"
+        ) as Page | null;
 
       return paginaSalva || "inicio";
     });
@@ -66,7 +68,9 @@ export default function App() {
             "lumora-pagina"
           ) as Page | null;
 
-        setPage(paginaSalva || "inicio");
+        setPage(
+          paginaSalva || "inicio"
+        );
       }
 
       setCarregandoSessao(false);
@@ -86,7 +90,9 @@ export default function App() {
               "lumora-pagina"
             ) as Page | null;
 
-          setPage(paginaSalva || "inicio");
+          setPage(
+            paginaSalva || "inicio"
+          );
         } else {
           setTela("inicio");
           setPage("inicio");
@@ -177,7 +183,6 @@ export default function App() {
   return (
     <div className="app">
       <div className="mobile-shell">
-
         {page === "inicio" && (
           <Dashboard
             onNavigate={navegar}
@@ -201,7 +206,11 @@ export default function App() {
         )}
 
         {page === "perfil" && (
-          <Perfil />
+          <Perfil
+            onVoltar={() =>
+              setPage("inicio")
+            }
+          />
         )}
 
         {page !== "perfil" && (
@@ -210,7 +219,6 @@ export default function App() {
             onChange={setPage}
           />
         )}
-
       </div>
     </div>
   );
