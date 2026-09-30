@@ -183,6 +183,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="mobile-shell">
+
         {page === "inicio" && (
           <Dashboard
             onNavigate={navegar}
@@ -190,19 +191,27 @@ export default function App() {
         )}
 
         {page === "agenda" && (
-          <Agenda />
+          <Agenda
+            onNavigate={navegar}
+          />
         )}
 
         {page === "financeiro" && (
-          <Financeiro />
+          <Financeiro
+            onNavigate={navegar}
+          />
         )}
 
         {page === "servicos" && (
-          <Servicos />
+          <Servicos
+            onNavigate={navegar}
+          />
         )}
 
         {page === "clientes" && (
-          <Clientes />
+          <Clientes
+            onNavigate={navegar}
+          />
         )}
 
         {page === "perfil" && (
@@ -219,6 +228,7 @@ export default function App() {
             onChange={setPage}
           />
         )}
+
       </div>
     </div>
   );
