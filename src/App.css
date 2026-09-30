@@ -3297,3 +3297,116 @@ body {
   }
 }
 
+/* =========================================================
+   CABEÇALHO DA PROFISSIONAL
+   ========================================================= */
+
+.cabecalho-profissional {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  padding: 22px 22px 18px;
+}
+
+.cabecalho-profissional-info {
+  min-width: 0;
+}
+
+.cabecalho-profissional-info h1 {
+  margin: 0;
+
+  color: var(--wine-dark);
+
+  font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-size: 28px;
+  line-height: 1;
+
+  font-weight: 600;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cabecalho-profissional-info p {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cabecalho-profissional-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+.cabecalho-profissional-avatar {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #dec6b8;
+  color: #fff;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cabecalho-profissional-avatar:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 16px
+    rgba(111, 38, 61, 0.15);
+}
+
+.cabecalho-profissional-avatar:active {
+  transform: scale(0.96);
+}
+
+.cabecalho-profissional-avatar:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: 3px;
+}
+
+@media (max-width: 430px) {
+  .cabecalho-profissional {
+    padding: 20px 20px 16px;
+  }
+
+  .cabecalho-profissional-info h1 {
+    font-size: 26px;
+  }
+}
+
