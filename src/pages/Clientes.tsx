@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
+import { CabecalhoProfissional } from "../components/CabecalhoProfissional";
 
 type Cliente = {
   id: string;
@@ -51,7 +52,9 @@ export function Clientes({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Não foi possível identificar sua conta.");
+      setErro(
+        "Não foi possível identificar sua conta."
+      );
       setCarregando(false);
       return;
     }
@@ -60,11 +63,17 @@ export function Clientes({
       .from("clientes")
       .select("*")
       .eq("profissional_id", user.id)
-      .order("nome", { ascending: true });
+      .order("nome", {
+        ascending: true,
+      });
 
     if (error) {
       console.error(error);
-      setErro("Não foi possível carregar suas clientes.");
+
+      setErro(
+        "Não foi possível carregar suas clientes."
+      );
+
       setCarregando(false);
       return;
     }
@@ -111,7 +120,10 @@ export function Clientes({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setErro("Sua sessão expirou. Faça login novamente.");
+      setErro(
+        "Sua sessão expirou. Faça login novamente."
+      );
+
       setSalvando(false);
       return;
     }
@@ -121,14 +133,19 @@ export function Clientes({
       .insert({
         profissional_id: user.id,
         nome: nome.trim(),
-        telefone: telefone.trim() || null,
-        observacoes: observacoes.trim() || null,
+        telefone:
+          telefone.trim() || null,
+        observacoes:
+          observacoes.trim() || null,
       })
       .select()
       .single();
 
     if (error) {
-      console.error("ERRO SUPABASE:", error);
+      console.error(
+        "ERRO SUPABASE:",
+        error
+      );
 
       setErro(
         error.message ||
@@ -154,38 +171,33 @@ export function Clientes({
     setModalAberto(false);
   }
 
-  function formatarTelefone(telefone: string | null) {
-    if (!telefone) return "Telefone não informado";
+  function formatarTelefone(
+    telefone: string | null
+  ) {
+    if (!telefone) {
+      return "Telefone não informado";
+    }
 
     return telefone;
   }
 
   return (
     <main className="page clientes-page">
-      <header className="top">
-        <div>
-          <h1>Lumora</h1>
-
-          <p>Lista de Clientes Cadastradas</p>
-        </div>
-
-        <button
-          type="button"
-          className="avatar page-avatar-button"
-          onClick={() => onNavigate("perfil")}
-          aria-label="Abrir perfil"
-          title="Perfil"
-        >
-          LU
-        </button>
-      </header>
+      <CabecalhoProfissional
+        subtitulo="Lista de Clientes Cadastradas"
+        onPerfil={() =>
+          onNavigate("perfil")
+        }
+      />
 
       <div className="clients-title">
         <h2>Minhas Clientes</h2>
 
         <b>
           {clientes.length}{" "}
-          {clientes.length === 1 ? "Total" : "Total"}
+          {clientes.length === 1
+            ? "Total"
+            : "Total"}
         </b>
       </div>
 
@@ -211,7 +223,9 @@ export function Clientes({
             className="spin"
           />
 
-          <span>Carregando clientes...</span>
+          <span>
+            Carregando clientes...
+          </span>
         </div>
       ) : clientes.length === 0 ? (
         <div className="clients-empty">
@@ -219,11 +233,14 @@ export function Clientes({
             <Plus size={22} />
           </div>
 
-          <h3>Nenhuma cliente cadastrada</h3>
+          <h3>
+            Nenhuma cliente cadastrada
+          </h3>
 
           <p>
-            Cadastre sua primeira cliente para começar
-            a organizar seus atendimentos.
+            Cadastre sua primeira cliente
+            para começar a organizar seus
+            atendimentos.
           </p>
 
           <button
@@ -236,13 +253,16 @@ export function Clientes({
       ) : (
         <div className="clients">
           {clientes.map((cliente) => {
-            const iniciais = cliente.nome
-              .trim()
-              .split(/\s+/)
-              .map((parte) => parte[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
+            const iniciais =
+              cliente.nome
+                .trim()
+                .split(/\s+/)
+                .map(
+                  (parte) => parte[0]
+                )
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
 
             return (
               <article
@@ -254,7 +274,9 @@ export function Clientes({
                 </div>
 
                 <div className="client-info">
-                  <strong>{cliente.nome}</strong>
+                  <strong>
+                    {cliente.nome}
+                  </strong>
 
                   <span>
                     {formatarTelefone(
@@ -304,13 +326,17 @@ export function Clientes({
 
             <div className="client-modal-handle" />
 
-            <h2>Adicionar cliente</h2>
+            <h2>
+              Adicionar cliente
+            </h2>
 
             <p>
               Cadastre os dados da sua cliente.
             </p>
 
-            <form onSubmit={adicionarCliente}>
+            <form
+              onSubmit={adicionarCliente}
+            >
               <label>
                 Nome
 
@@ -319,7 +345,9 @@ export function Clientes({
                   placeholder="Nome da cliente"
                   value={nome}
                   onChange={(event) =>
-                    setNome(event.target.value)
+                    setNome(
+                      event.target.value
+                    )
                   }
                   autoFocus
                 />
@@ -333,7 +361,9 @@ export function Clientes({
                   placeholder="(00) 00000-0000"
                   value={telefone}
                   onChange={(event) =>
-                    setTelefone(event.target.value)
+                    setTelefone(
+                      event.target.value
+                    )
                   }
                 />
               </label>
@@ -345,7 +375,9 @@ export function Clientes({
                   placeholder="Alguma observação sobre a cliente..."
                   value={observacoes}
                   onChange={(event) =>
-                    setObservacoes(event.target.value)
+                    setObservacoes(
+                      event.target.value
+                    )
                   }
                   rows={3}
                 />
@@ -378,6 +410,7 @@ export function Clientes({
                         size={17}
                         className="spin"
                       />
+
                       Salvando...
                     </>
                   ) : (
