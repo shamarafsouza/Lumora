@@ -857,6 +857,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 8px;
   box-shadow: 0 3px 12px #6b30400b;
 }
@@ -864,6 +865,7 @@ body {
 .service-card strong {
   display: block;
   font-size: 13px;
+  color: #4b3040;
 }
 
 .service-card span {
@@ -882,6 +884,35 @@ body {
 .service-card > b {
   font-size: 13px;
   color: var(--wine-dark);
+  white-space: nowrap;
+}
+
+.service-card button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbf5f1;
+  color: var(--wine);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.service-card button:hover {
+  background: #f8e9ed;
+  border-color: var(--wine);
+}
+
+.service-card button:last-child {
+  color: #b0384f;
+}
+
+.service-card button svg {
+  width: 15px;
+  height: 15px;
 }
 
 /* =========================
@@ -892,7 +923,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 76px 0 10px;
+  margin: 8px 0 12px;
 }
 
 .clients-title h2 {
@@ -3411,4 +3442,3 @@ body {
     font-size: 26px;
   }
 }
-
