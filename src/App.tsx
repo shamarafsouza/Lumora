@@ -22,6 +22,7 @@ import Perfil from "./pages/Perfil";
 import { Inicio } from "./pages/Inicio";
 import { Login } from "./pages/Login";
 import { ResetarSenha } from "./pages/ResetarSenha";
+import { Tutorial } from "./components/Tutorial";
 
 import "./App.css";
 import "./pages/Auth.css";
@@ -73,6 +74,17 @@ export default function App() {
     carregandoSessao,
     setCarregandoSessao,
   ] = useState(true);
+
+  const [usuarioId, setUsuarioId] =
+    useState("");
+
+  const [nome, setNome] =
+    useState("");
+
+  const [
+    tutorialAberto,
+    setTutorialAberto,
+  ] = useState(false);
 
   /* =====================================================
      SALVAR PÁGINA ATUAL
@@ -140,15 +152,14 @@ export default function App() {
      CARREGAR TEMA
      ===================================================== */
 
-  async function carregarTema(
-    userId: string
-  ) {
-    const {
-      data,
-      error,
-    } = await supabase
+  async function carregarTema(userId: string) {
+    setUsuarioId(userId);
+
+    const { data, error } = await supabase
       .from("configuracoes_negocio")
-      .select("cor_principal")
+      .select(
+        "cor_principal, nome_profissional"
+      )
       .eq(
         "profissional_id",
         userId
@@ -160,15 +171,56 @@ export default function App() {
         "Erro ao carregar tema:",
         error
       );
-
-      aplicarCor(COR_PADRAO);
-      return;
     }
 
     aplicarCor(
       data?.cor_principal ??
         COR_PADRAO
     );
+
+    let nomeCompleto =
+      (
+        data?.nome_profissional ??
+        ""
+      ).trim();
+
+    if (!nomeCompleto) {
+      const { data: perfil } =
+        await supabase
+          .from("profiles")
+          .select("nome")
+          .eq("id", userId)
+          .maybeSingle();
+
+      nomeCompleto =
+        (perfil?.nome ?? "").trim();
+    }
+
+    setNome(
+      nomeCompleto
+        .split(/\s+/)
+        .filter(Boolean)[0] ??
+        ""
+    );
+
+    if (
+      !localStorage.getItem(
+        `lumora-tutorial-${userId}`
+      )
+    ) {
+      setTutorialAberto(true);
+    }
+  }
+
+  function fecharTutorial() {
+    if (usuarioId) {
+      localStorage.setItem(
+        `lumora-tutorial-${usuarioId}`,
+        "1"
+      );
+    }
+
+    setTutorialAberto(false);
   }
 
   /* =====================================================
@@ -271,6 +323,9 @@ export default function App() {
             setTela("inicio");
             setPage("inicio");
             setPaginaAnterior("inicio");
+            setUsuarioId("");
+            setNome("");
+            setTutorialAberto(false);
 
             aplicarCor(COR_PADRAO);
           }
@@ -445,6 +500,9 @@ export default function App() {
             onVoltar={
               voltarDoPerfil
             }
+            onAbrirTutorial={() =>
+              setTutorialAberto(true)
+            }
           />
         )}
 
@@ -456,6 +514,17 @@ export default function App() {
           <BottomNav
             page={page}
             onChange={navegar}
+          />
+        )}
+
+        {tutorialAberto && (
+          <Tutorial
+            nome={nome}
+            onIr={(pagina) => {
+              navegar(pagina);
+              fecharTutorial();
+            }}
+            onFechar={fecharTutorial}
           />
         )}
       </div>
