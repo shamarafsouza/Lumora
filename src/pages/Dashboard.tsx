@@ -7,9 +7,12 @@ import {
 import {
   CalendarPlus,
   CalendarDays,
+  Check,
   ChartNoAxesColumnIncreasing,
+  ChevronDown,
   ChevronRight,
   Clock3,
+  Flag,
   LoaderCircle,
   Sparkles,
   Users,
@@ -158,6 +161,20 @@ export function Dashboard({
     setErro,
   ] = useState("");
 
+  const [
+    totais,
+    setTotais,
+  ] = useState({
+    agendamentos: 0,
+    atendimentos: 0,
+    saidas: 0,
+  });
+
+  const [
+    passosAberto,
+    setPassosAberto,
+  ] = useState(true);
+
   const hoje = useMemo(() => {
     const data = new Date();
 
@@ -274,6 +291,9 @@ export function Dashboard({
         agendamentosResponse,
         financeiroResponse,
         despesasResponse,
+        totalAgendamentosResponse,
+        totalFinanceiroResponse,
+        totalDespesasResponse,
       ] = await Promise.all([
         supabase
           .from("clientes")
@@ -357,6 +377,39 @@ export function Dashboard({
             "data",
             inicioProximoMesData
           ),
+
+        supabase
+          .from("agendamentos")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq(
+            "profissional_id",
+            user.id
+          ),
+
+        supabase
+          .from("financeiro_atendimentos")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq(
+            "profissional_id",
+            user.id
+          ),
+
+        supabase
+          .from("despesas")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq(
+            "profissional_id",
+            user.id
+          ),
       ]);
 
       if (clientesResponse.error) {
@@ -383,6 +436,24 @@ export function Dashboard({
         despesasResponse.error
       ) {
         throw despesasResponse.error;
+      }
+
+      if (
+        totalAgendamentosResponse.error
+      ) {
+        throw totalAgendamentosResponse.error;
+      }
+
+      if (
+        totalFinanceiroResponse.error
+      ) {
+        throw totalFinanceiroResponse.error;
+      }
+
+      if (
+        totalDespesasResponse.error
+      ) {
+        throw totalDespesasResponse.error;
       }
 
       const receitas =
@@ -448,6 +519,18 @@ export function Dashboard({
         agendamentosResponse.data ??
           []
       );
+
+      setTotais({
+        agendamentos:
+          totalAgendamentosResponse.count ??
+          0,
+        atendimentos:
+          totalFinanceiroResponse.count ??
+          0,
+        saidas:
+          totalDespesasResponse.count ??
+          0,
+      });
     } catch (error) {
       console.error(
         "Erro ao carregar dashboard:",
@@ -557,6 +640,47 @@ export function Dashboard({
     receitasMes -
     custosMes;
 
+  const passos = [
+    {
+      id: "cliente",
+      titulo: "Cadastrar sua primeira cliente",
+      descricao: "Nome e WhatsApp para os lembretes",
+      feito: clientes.length > 0,
+      destino: "clientes" as const,
+    },
+    {
+      id: "servico",
+      titulo: "Cadastrar seu primeiro serviço",
+      descricao: "Nome, duração e preço",
+      feito: servicos.length > 0,
+      destino: "servicos" as const,
+    },
+    {
+      id: "horario",
+      titulo: "Marcar seu primeiro horário",
+      descricao: "Toque em um horário livre na Agenda",
+      feito: totais.agendamentos > 0,
+      destino: "agenda" as const,
+    },
+    {
+      id: "atendimento",
+      titulo: "Concluir um atendimento",
+      descricao: "Ele vira uma entrada no Financeiro",
+      feito: totais.atendimentos > 0,
+      destino: "agenda" as const,
+    },
+    {
+      id: "saida",
+      titulo: "Registrar uma saída",
+      descricao: "Anote um gasto do seu negócio",
+      feito: totais.saidas > 0,
+      destino: "financeiro" as const,
+    },
+  ];
+
+  const passosFeitos =
+    passos.filter((passo) => passo.feito).length;
+
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
@@ -622,6 +746,94 @@ export function Dashboard({
         </div>
       ) : (
         <>
+          {passosFeitos < passos.length && (
+            <section className="first-steps">
+              <button
+                type="button"
+                className="first-steps-header"
+                onClick={() =>
+                  setPassosAberto((aberto) => !aberto)
+                }
+                aria-expanded={passosAberto}
+              >
+                <div className="first-steps-icon">
+                  <Flag size={18} />
+                </div>
+
+                <div className="first-steps-title">
+                  <div className="first-steps-row">
+                    <strong>Primeiros passos</strong>
+
+                    <span>
+                      {passosFeitos} de {passos.length}
+                    </span>
+                  </div>
+
+                  <div className="first-steps-bar">
+                    <i
+                      style={{
+                        width: `${
+                          (passosFeitos / passos.length) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <ChevronDown
+                  size={18}
+                  className={
+                    passosAberto ? "aberto" : ""
+                  }
+                />
+              </button>
+
+              {passosAberto && (
+                <ul className="first-steps-list">
+                  {passos.map((passo) => (
+                    <li
+                      key={passo.id}
+                      className={
+                        passo.feito ? "feito" : ""
+                      }
+                    >
+                      <span className="first-steps-check">
+                        {passo.feito && (
+                          <Check size={13} />
+                        )}
+                      </span>
+
+                      <div>
+                        <strong>
+                          {passo.titulo}
+                        </strong>
+
+                        <small>
+                          {passo.descricao}
+                        </small>
+                      </div>
+
+                      {!passo.feito && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onNavigate(
+                              passo.destino
+                            )
+                          }
+                        >
+                          Fazer
+                          <ChevronRight size={13} />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           <section className="next-section">
             <div className="section-heading">
               <div>
