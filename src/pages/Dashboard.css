@@ -659,3 +659,358 @@
     min-height: 64px;
   }
 }
+
+/* =========================
+   PRIMEIROS PASSOS
+   ========================= */
+
+.first-steps {
+  margin-bottom: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 4px 15px #6b30400b;
+  overflow: hidden;
+}
+
+.first-steps-header {
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-family: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.first-steps-icon {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background: #f8e9ed;
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+}
+
+.first-steps-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.first-steps-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.first-steps-row strong {
+  color: var(--wine-dark);
+  font-size: 14px;
+}
+
+.first-steps-row span {
+  color: var(--wine);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.first-steps-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #f3e4e8;
+  overflow: hidden;
+}
+
+.first-steps-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--wine),
+    var(--gold)
+  );
+  transition: width 0.4s ease;
+}
+
+.first-steps-header > svg {
+  flex: none;
+  transition: transform 0.25s;
+}
+
+.first-steps-header > svg.aberto {
+  transform: rotate(180deg);
+}
+
+.first-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.first-steps-list li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: #fffaf7;
+}
+
+.first-steps-list li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.first-steps-list li strong {
+  display: block;
+  color: #4b3040;
+  font-size: 13px;
+}
+
+.first-steps-list li small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.first-steps-check {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid #d8c6c0;
+  background: #fff;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.first-steps-list li.feito .first-steps-check {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.first-steps-list li.feito strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.first-steps-list li > button {
+  flex: none;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wine);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================
+   TUTORIAL
+   ========================= */
+
+.tutorial-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  padding: 16px;
+  background: #21151d99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tutorial-fade 0.25s ease both;
+}
+
+.tutorial-card {
+  position: relative;
+  width: min(380px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 30px 24px 22px;
+  border-radius: 26px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 20px 60px #21151d40;
+  animation: tutorial-sobe 0.3s ease both;
+}
+
+.tutorial-fechar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8d7580;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tutorial-icone {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #f8e9ed;
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+}
+
+.tutorial-card h2 {
+  margin: 0 0 10px;
+  font: 700 22px "Playfair Display", serif;
+  color: var(--wine-dark);
+}
+
+.tutorial-card p {
+  margin: 0;
+  color: #765e69;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tutorial-dica {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: #fbf2ef;
+  border: 1px solid #ead7d2;
+  color: #8b6b36;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.tutorial-ir {
+  margin: 14px auto 0;
+  padding: 8px 14px;
+  border: 1px solid var(--wine);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wine);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-pontos {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 20px 0 16px;
+}
+
+.tutorial-pontos span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5d9dd;
+  transition:
+    width 0.25s,
+    background 0.25s;
+}
+
+.tutorial-pontos span.ativo {
+  width: 20px;
+  background: var(--wine);
+}
+
+.tutorial-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 10px;
+}
+
+.tutorial-acoes button {
+  height: 46px;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutorial-secundario {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+}
+
+.tutorial-principal {
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    var(--wine),
+    var(--wine-dark)
+  );
+  color: #fff;
+  box-shadow: 0 8px 20px #96264e33;
+}
+
+.perfil-tutorial {
+  width: 100%;
+  margin-top: 18px;
+  min-height: 44px;
+  border: 1px dashed #dcc6cc;
+  border-radius: 12px;
+  background: #fffaf7;
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes tutorial-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tutorial-sobe {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
