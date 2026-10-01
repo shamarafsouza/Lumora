@@ -919,7 +919,7 @@ body {
    CLIENTES
    ========================= */
 
-.clients-title {
+   .clients-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3441,4 +3441,135 @@ body {
   .cabecalho-profissional-info h1 {
     font-size: 26px;
   }
+}
+
+/* =========================================================
+   AJUSTES — CLIENTES E SERVIÇOS
+   ========================================================= */
+
+.clients-title {
+  margin: 4px 0 12px;
+}
+
+/* ---------- Cards de serviço ---------- */
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-group {
+  margin-top: 20px;
+}
+
+.service-group h2 {
+  margin: 0 0 10px;
+}
+
+.service-card {
+  gap: 12px;
+  padding: 14px;
+}
+
+.service-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.service-main strong {
+  font-size: 14px;
+  color: #4b3040;
+}
+
+.service-main span {
+  margin-top: 3px;
+}
+
+.service-main > b {
+  font-size: 15px;
+  color: var(--wine-dark);
+}
+
+.service-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.service-actions button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbf5f1;
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.service-actions button:hover {
+  background: #f8e9ed;
+  border-color: var(--wine);
+}
+
+.service-actions button:last-child {
+  color: #b0384f;
+}
+
+.service-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.service-actions button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Campos com "R$" e "min" no modal ---------- */
+
+.service-input-with-prefix,
+.service-input-with-suffix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbf5f1;
+  padding: 0 12px;
+}
+
+.service-input-with-prefix:focus-within,
+.service-input-with-suffix:focus-within {
+  border-color: var(--wine);
+}
+
+.service-input-with-prefix input,
+.service-input-with-suffix input {
+  flex: 1;
+  min-width: 0;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 11px 0 !important;
+}
+
+.service-input-with-prefix span,
+.service-input-with-suffix span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Modal de cliente/serviço rolável ---------- */
+
+.client-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
