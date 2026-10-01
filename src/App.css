@@ -2877,14 +2877,15 @@ body {
   overflow: visible;
 }
 
-.mobile-shell .bottom-nav {
-  position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: 0;
-  width: min(100vw, 430px);
-  max-width: 430px;
-  transform: translateX(-50%);
+.app .mobile-shell .bottom-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: min(100%, 430px) !important;
+  max-width: 430px !important;
+  margin: 0 auto !important;
+  transform: none !important;
   box-sizing: border-box;
   z-index: 50;
 }
