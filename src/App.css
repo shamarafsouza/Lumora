@@ -32,7 +32,7 @@ body {
 
 .page {
   min-height: 100vh;
-  padding: 20px 22px 100px;
+  padding: 20px 22px calc(100px + env(safe-area-inset-bottom));
 }
 
 .top {
@@ -960,12 +960,13 @@ body {
    ========================= */
 
 .bottom-nav {
-  position: absolute;
+  position: fixed;
+  left: 50%;
   bottom: 0;
-  left: 0;
-  width: 100%;
+  width: min(100%, 430px);
   height: 76px;
   box-sizing: border-box;
+  transform: translateX(-50%);
   background: #fff;
   border-top: 1px solid var(--line);
   display: grid;
@@ -2879,12 +2880,12 @@ body {
 }
 
 .mobile-shell .bottom-nav {
-  position: absolute;
-  left: 0;
+  position: fixed;
+  left: 50%;
   bottom: 0;
-  width: 100%;
-  max-width: none;
-  transform: none;
+  width: min(100%, 430px);
+  max-width: 430px;
+  transform: translateX(-50%);
   box-sizing: border-box;
 }
 
@@ -3409,4 +3410,3 @@ body {
     font-size: 26px;
   }
 }
-

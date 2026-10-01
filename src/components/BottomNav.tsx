@@ -20,31 +20,31 @@ const items: [Page, string, ReactNode][] = [
   [
     "inicio",
     "Início",
-    <Home />,
+    <Home size={20} />,
   ],
 
   [
     "agenda",
     "Agenda",
-    <CalendarDays />,
+    <CalendarDays size={20} />,
   ],
 
   [
     "financeiro",
     "Financeiro",
-    <ChartNoAxesColumnIncreasing />,
+    <ChartNoAxesColumnIncreasing size={20} />,
   ],
 
   [
     "servicos",
     "Serviços",
-    <Sparkles />,
+    <Sparkles size={20} />,
   ],
 
   [
     "clientes",
     "Clientes",
-    <Users />,
+    <Users size={20} />,
   ],
 ];
 
@@ -56,27 +56,36 @@ export function BottomNav({
   onChange: (page: Page) => void;
 }) {
   return (
-    <nav className="bottom-nav">
-      {items.map(([id, label, icon]) => (
-        <button
-          className={
-            page === id
-              ? "active"
-              : ""
-          }
-          key={id}
-          onClick={() =>
-            onChange(id)
-          }
-          type="button"
-        >
-          {icon}
+    <nav
+      className="bottom-nav"
+      aria-label="Navegação principal"
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        zIndex: 1000,
+      }}
+    >
+      {items.map(([id, label, icon]) => {
+        const ativo = page === id;
 
-          <span>
-            {label}
-          </span>
-        </button>
-      ))}
+        return (
+          <button
+            key={id}
+            type="button"
+            className={ativo ? "active" : ""}
+            onClick={() => onChange(id)}
+            aria-current={ativo ? "page" : undefined}
+            aria-label={label}
+          >
+            {icon}
+
+            <span>{label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
