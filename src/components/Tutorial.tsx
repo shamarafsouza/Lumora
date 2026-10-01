@@ -1,150 +1,96 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
+
+import { supabase } from "./lib/supabase";
+
 import {
-  Users,
-  Sparkles,
-  CalendarDays,
-  CheckCircle2,
-  Wallet,
-  PartyPopper,
-  X,
-  ArrowRight,
-} from "lucide-react";
-import type { Page } from "./BottomNav";
+  aplicarCor,
+  COR_PADRAO,
+} from "./lib/tema";
 
-type Passo = {
-  icone: ReactNode;
-  titulo: string;
-  texto: string;
-  dica?: string;
-  destino?: Page;
-  rotuloDestino?: string;
-};
+import {
+  BottomNav,
+  type Page,
+} from "./components/BottomNav";
 
-export function Tutorial({
-  nome,
-  onIr,
-  onFechar,
-}: {
-  nome?: string;
-  onIr: (pagina: Page) => void;
-  onFechar: () => void;
-}) {
-  const [indice, setIndice] = useState(0);
+import { Dashboard } from "./pages/Dashboard";
+import { Agenda } from "./pages/Agenda";
+import Financeiro from "./pages/Financeiro";
+import { Servicos } from "./pages/Servicos";
+import { Clientes } from "./pages/Clientes";
+import Perfil from "./pages/Perfil";
 
-  const passos: Passo[] = [
-    {
-      icone: <PartyPopper size={26} />,
-      titulo: nome ? `Bem-vinda, ${nome}!` : "Bem-vinda ao Lumora!",
-      texto:
-        "Vou te mostrar em 1 minutinho como organizar sua agenda, suas clientes e o seu financeiro. Dá para pular e rever quando quiser.",
-    },
-    {
-      icone: <Users size={26} />,
-      titulo: "1. Cadastre suas clientes",
-      texto:
-        "Na aba Clientes, toque em adicionar e preencha o nome e o WhatsApp. Com o telefone salvo, você manda o lembrete do horário com um toque.",
-      dica: "Cadastre a cliente antes de marcar o primeiro horário.",
-      destino: "clientes",
-      rotuloDestino: "Ir para Clientes",
-    },
-    {
-      icone: <Sparkles size={26} />,
-      titulo: "2. Cadastre seus serviços",
-      texto:
-        "Na aba Serviços, adicione cada procedimento com nome, duração e preço. Exemplo: Unha de gel, 120 minutos, R$ 150,00.",
-      dica: "Escolha também os produtos usados em cada serviço. O Lumora calcula o custo do material sozinho.",
-      destino: "servicos",
-      rotuloDestino: "Ir para Serviços",
-    },
-    {
-      icone: <CalendarDays size={26} />,
-      titulo: "3. Marque na Agenda",
-      texto:
-        "Toque em um horário “Disponível” (ou no botão +), escolha a cliente e o serviço. Toque em um atendimento para mandar o lembrete no WhatsApp.",
-      dica: "Na engrenagem ⚙ da Agenda você define os dias que atende e o intervalo de almoço.",
-      destino: "agenda",
-      rotuloDestino: "Ir para Agenda",
-    },
-    {
-      icone: <CheckCircle2 size={26} />,
-      titulo: "4. Conclua o atendimento",
-      texto:
-        "Quando terminar, toque no atendimento e em Concluir. Informe o valor recebido e a forma de pagamento. Ele vira uma entrada no Financeiro, já com o custo do material.",
-    },
-    {
-      icone: <Wallet size={26} />,
-      titulo: "5. Entradas e saídas",
-      texto:
-        "No Financeiro, “Nova entrada” registra dinheiro que entrou e “Nova saída” registra o que você gastou (aluguel, materiais, energia...). O topo mostra Receitas, Custos e Resultado.",
-      dica: "Em “Produtos e custos” você cadastra gel, primer, lixas etc. com o preço pago.",
-      destino: "financeiro",
-      rotuloDestino: "Ir para Financeiro",
-    },
-    {
-      icone: <PartyPopper size={26} />,
-      titulo: "Tudo pronto!",
-      texto:
-        "Comece cadastrando sua primeira cliente e seu primeiro serviço. Para rever este guia, vá em Perfil e toque em “Ver tutorial do app”.",
-    },
-  ];
+import { Inicio } from "./pages/Inicio";
+import { Login } from "./pages/Login";
+import { ResetarSenha } from "./pages/ResetarSenha";
+import { Tutorial } from "./components/Tutorial";
 
-  const passo = passos[indice];
-  const ultimo = indice === passos.length - 1;
+import "./App.css";
+import "./pages/Auth.css";
 
-  return (
-    <div className="tutorial-backdrop" role="dialog" aria-modal="true">
-      <section className="tutorial-card">
-        <button
-          type="button"
-          className="tutorial-fechar"
-          onClick={onFechar}
-          aria-label="Fechar tutorial"
-        >
-          <X size={18} />
-        </button>
+type Tela =
+  | "inicio"
+  | "login"
+  | "cadastro"
+  | "resetar-senha"
+  | "app";
 
-        <div className="tutorial-icone">{passo.icone}</div>
+export default function App() {
+  const [tela, setTela] =
+    useState<Tela>("inicio");
 
-        <h2>{passo.titulo}</h2>
-        <p>{passo.texto}</p>
+  const [page, setPage] =
+    useState<Page>(() => {
+      const paginaSalva =
+        localStorage.getItem(
+          "lumora-pagina"
+        ) as Page | null;
 
-        {passo.dica && <div className="tutorial-dica">💡 {passo.dica}</div>}
+      return paginaSalva || "inicio";
+    });
 
-        {passo.destino && (
-          <button
-            type="button"
-            className="tutorial-ir"
-            onClick={() => onIr(passo.destino as Page)}
-          >
-            {passo.rotuloDestino}
-            <ArrowRight size={14} />
-          </button>
-        )}
+  /*
+   * Guarda a página em que a profissional estava
+   * antes de abrir o Perfil.
+   *
+   * Assim:
+   *
+   * Serviços → Perfil → Voltar → Serviços
+   * Agenda → Perfil → Voltar → Agenda
+   * Financeiro → Perfil → Voltar → Financeiro
+   * Clientes → Perfil → Voltar → Clientes
+   */
 
-        <div className="tutorial-pontos">
-          {passos.map((_, i) => (
-            <span key={i} className={i === indice ? "ativo" : ""} />
-          ))}
-        </div>
+  const [paginaAnterior, setPaginaAnterior] =
+    useState<Page>(() => {
+      const paginaSalva =
+        localStorage.getItem(
+          "lumora-pagina-anterior"
+        ) as Page | null;
 
-        <div className="tutorial-acoes">
-          <button
-            type="button"
-            className="tutorial-secundario"
-            onClick={() => (indice > 0 ? setIndice(indice - 1) : onFechar())}
-          >
-            {indice > 0 ? "Voltar" : "Pular"}
-          </button>
+      return paginaSalva || "inicio";
+    });
 
-          <button
-            type="button"
-            className="tutorial-principal"
-            onClick={() => (ultimo ? onFechar() : setIndice(indice + 1))}
-          >
-            {ultimo ? "Começar a usar" : indice === 0 ? "Vamos começar!" : "Próximo"}
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
+  const [
+    carregandoSessao,
+    setCarregandoSessao,
+  ] = useState(true);
+
+  const [usuarioId, setUsuarioId] =
+    useState("");
+
+  const [nome, setNome] =
+    useState("");
+
+  const [
+    tutorialAberto,
+    setTutorialAberto,
+  ] = useState(false);
+
+  /* =====================================================
+     SALVAR PÁGINA ATUAL
+     ===================================================== */
+
+  useEffect(() => {
+    localStorage.setItem(
+      "lumora-pagina",
+      page
