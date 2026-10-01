@@ -59,14 +59,6 @@ export function BottomNav({
     <nav
       className="bottom-nav"
       aria-label="Navegação principal"
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: "100%",
-        zIndex: 1000,
-      }}
     >
       {items.map(([id, label, icon]) => {
         const ativo = page === id;
@@ -81,7 +73,6 @@ export function BottomNav({
             aria-label={label}
           >
             {icon}
-
             <span>{label}</span>
           </button>
         );
