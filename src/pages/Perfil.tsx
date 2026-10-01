@@ -9,6 +9,7 @@ import {
   LogOut,
   Image as ImageIcon,
   FolderOpen,
+  HelpCircle,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { aplicarCor } from "../lib/tema";
@@ -44,8 +45,10 @@ const configuracaoInicial: Omit<
 
 export default function Perfil({
   onVoltar,
+  onAbrirTutorial,
 }: {
   onVoltar: () => void;
+  onAbrirTutorial?: () => void;
 }) {
   const [config, setConfig] = useState(configuracaoInicial);
   const [usuarioId, setUsuarioId] = useState("");
@@ -703,6 +706,16 @@ export default function Perfil({
               Sair da conta
             </button>
           </div>
+          {onAbrirTutorial && (
+            <button
+              type="button"
+              className="perfil-tutorial"
+              onClick={onAbrirTutorial}
+            >
+              <HelpCircle size={17} />
+              Ver tutorial do app
+            </button>
+          )}
         </section>
       </div>
 
