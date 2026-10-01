@@ -32,6 +32,7 @@ body {
 
 .page {
   min-height: 100vh;
+  box-sizing: border-box;
   padding: 20px 22px calc(100px + env(safe-area-inset-bottom));
 }
 
@@ -960,13 +961,12 @@ body {
    ========================= */
 
 .bottom-nav {
-  position: fixed;
-  left: 50%;
+  position: absolute;
   bottom: 0;
-  width: min(100%, 430px);
+  left: 0;
+  width: 100%;
   height: 76px;
   box-sizing: border-box;
-  transform: translateX(-50%);
   background: #fff;
   border-top: 1px solid var(--line);
   display: grid;
@@ -2858,6 +2858,7 @@ body,
 
 body {
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .app {
@@ -2874,19 +2875,19 @@ body {
   min-height: 100vh;
   background: var(--cream);
   position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
-  container-type: inline-size;
+  overflow: visible;
 }
 
 .mobile-shell .bottom-nav {
   position: fixed;
   left: 50%;
+  right: auto;
   bottom: 0;
   width: min(100%, 430px);
   max-width: 430px;
   transform: translateX(-50%);
   box-sizing: border-box;
+  z-index: 5;
 }
 
 @media (max-width: 430px) {
