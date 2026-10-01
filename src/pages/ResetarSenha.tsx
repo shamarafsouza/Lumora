@@ -53,7 +53,6 @@ export function ResetarSenha({
         setErro("");
       } else {
         setSessaoValida(false);
-
         setErro(
           "O link de recuperação é inválido ou expirou. Solicite um novo link."
         );
@@ -135,24 +134,16 @@ export function ResetarSenha({
     setSenha("");
     setConfirmarSenha("");
 
-    setCarregando(false);
-
-    /*
-     * Mostra a mensagem de sucesso.
-     */
     setSucesso(
-      "Senha resetada com sucesso!"
+      "Sua senha foi alterada com sucesso!"
     );
 
-    /*
-     * Depois de 2 segundos, encerra a sessão
-     * de recuperação e volta automaticamente
-     * para a tela de login.
-     */
-    setTimeout(async () => {
-      await supabase.auth.signOut();
-      onVoltar();
-    }, 2000);
+    setCarregando(false);
+  }
+
+  async function voltarLogin() {
+    await supabase.auth.signOut();
+    onVoltar();
   }
 
   return (
@@ -181,15 +172,12 @@ export function ResetarSenha({
           </span>
 
           <h1>
-            {sucesso
-              ? "Tudo certo!"
-              : "Crie uma nova senha"}
+            Crie uma nova senha
           </h1>
 
           <p>
-            {sucesso
-              ? "Sua senha foi atualizada. Você será redirecionada para o login."
-              : "Escolha uma nova senha para continuar usando o Lumora."}
+            Escolha uma nova senha para
+            continuar usando o Lumora.
           </p>
         </div>
 
@@ -320,25 +308,21 @@ export function ResetarSenha({
         ) : (
           <div className="auth-form">
             <div className="auth-message auth-success">
-              <CheckCircle2 size={20} />
+              <CheckCircle2 size={18} />
 
               <span>
-                Senha resetada com sucesso!
+                Sua senha foi alterada com
+                sucesso!
               </span>
             </div>
 
-            <p
-              style={{
-                margin: 0,
-                textAlign: "center",
-                fontFamily:
-                  '"DM Sans", sans-serif',
-                fontSize: "12px",
-                color: "var(--muted)",
-              }}
+            <button
+              type="button"
+              className="auth-submit"
+              onClick={voltarLogin}
             >
-              Redirecionando para o login...
-            </p>
+              Voltar para o login
+            </button>
           </div>
         )}
       </div>
