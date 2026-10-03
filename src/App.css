@@ -3573,3 +3573,301 @@ body {
   overflow-y: auto;
   box-sizing: border-box;
 }
+
+/* =========================================================
+   LUMORA — RESPONSIVIDADE DESKTOP
+   ========================================================= */
+
+.desktop-sidebar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  body {
+    background: #f6efeb;
+  }
+
+  .app {
+    min-height: 100vh;
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch;
+    background:
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(242, 218, 224, 0.55),
+        transparent 32%
+      ),
+      #f6efeb;
+  }
+
+  .desktop-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 238px;
+    height: 100vh;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 28px 16px 18px;
+
+    background: #fffdfb;
+    border-right: 1px solid var(--line);
+
+    z-index: 100;
+  }
+
+  .desktop-sidebar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    min-height: 54px;
+    padding: 0 14px 24px;
+    margin-bottom: 8px;
+
+    border-bottom: 1px solid var(--line);
+  }
+
+  .desktop-sidebar-logo {
+    display: block;
+    width: 125px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .desktop-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 20px;
+  }
+
+  .desktop-sidebar-label {
+    padding: 0 12px;
+    margin-bottom: 8px;
+
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .desktop-sidebar-item {
+    width: 100%;
+    min-height: 45px;
+
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    padding: 0 13px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: transparent;
+    color: #8d7781;
+
+    font-family: "DM Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: left;
+    cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .desktop-sidebar-item:hover {
+    background: #faf1f4;
+    color: var(--wine);
+  }
+
+  .desktop-sidebar-item.active {
+    background: #f8e9ed;
+    color: var(--wine);
+  }
+
+  .desktop-sidebar-item.active svg {
+    color: var(--wine);
+  }
+
+  .desktop-sidebar-bottom {
+    margin-top: auto;
+  }
+
+  .desktop-sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-top: 12px;
+    padding: 13px 10px;
+
+    border-top: 1px solid var(--line);
+  }
+
+  .desktop-sidebar-avatar {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: #d7bcae;
+    color: #fff;
+
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .desktop-sidebar-user-info {
+    min-width: 0;
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .desktop-sidebar-user-info strong {
+    overflow: hidden;
+    color: var(--wine-dark);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desktop-sidebar-user-info span {
+    color: var(--muted);
+    font-size: 9px;
+  }
+
+  .desktop-sidebar-logout {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+
+    display: grid;
+    place-items: center;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--muted);
+
+    cursor: pointer;
+  }
+
+  .desktop-sidebar-logout:hover {
+    background: #f8e9ed;
+    color: var(--wine);
+  }
+
+  /*
+   * Desktop:
+   * a área do Lumora começa depois da sidebar.
+   */
+  .mobile-shell {
+    width: calc(100% - 238px);
+    max-width: none;
+    min-height: 100vh;
+    margin-left: 238px;
+
+    background: var(--cream);
+    overflow: visible;
+  }
+
+  /*
+   * O conteúdo interno deixa de parecer um celular.
+   */
+  .mobile-shell > .page,
+  .mobile-shell > .dashboard-page,
+  .mobile-shell > .financeiro-page,
+  .mobile-shell > .perfil-page {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  /*
+   * BottomNav é somente mobile.
+   */
+  .app .mobile-shell .bottom-nav {
+    display: none !important;
+  }
+
+  /*
+   * Modais continuam centralizados no desktop,
+   * em vez de parecerem um bottom sheet de celular.
+   */
+  .sheet-backdrop,
+  .financeiro-modal-backdrop,
+  .client-modal-backdrop,
+  .agenda-modal-backdrop,
+  .jornada-modal-backdrop,
+  .produto-modal-backdrop {
+    align-items: center;
+  }
+
+  .sheet,
+  .financeiro-modal,
+  .client-modal,
+  .agenda-modal,
+  .jornada-modal,
+  .produto-modal {
+    width: min(520px, calc(100vw - 40px));
+    max-width: 520px;
+    border-radius: 22px;
+  }
+
+  /*
+   * Perfil já tem uma estrutura própria e aproveita
+   * melhor a largura no desktop.
+   */
+  .perfil-page {
+    padding: 34px 42px 50px;
+  }
+
+  .perfil-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1080px;
+  }
+
+  /*
+   * Dashboard ganha mais espaço horizontal.
+   */
+  .dashboard-page {
+    padding: 30px 42px 50px;
+  }
+
+  /*
+   * Financeiro também.
+   */
+  .financeiro-page {
+    padding: 30px 42px 50px;
+  }
+
+  /*
+   * Agenda.
+   */
+  .page {
+    padding: 30px 42px 50px;
+  }
+}

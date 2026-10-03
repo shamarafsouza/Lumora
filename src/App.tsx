@@ -12,6 +12,8 @@ import {
   type Page,
 } from "./components/BottomNav";
 
+import { Sidebar } from "./components/Sidebar";
+
 import { Dashboard } from "./pages/Dashboard";
 import { Agenda } from "./pages/Agenda";
 import Financeiro from "./pages/Financeiro";
@@ -22,6 +24,7 @@ import Perfil from "./pages/Perfil";
 import { Inicio } from "./pages/Inicio";
 import { Login } from "./pages/Login";
 import { ResetarSenha } from "./pages/ResetarSenha";
+
 import { Tutorial } from "./components/Tutorial";
 
 import "./App.css";
@@ -35,30 +38,16 @@ type Tela =
   | "app";
 
 export default function App() {
-  const [tela, setTela] =
-    useState<Tela>("inicio");
+  const [tela, setTela] = useState<Tela>("inicio");
 
-  const [page, setPage] =
-    useState<Page>(() => {
-      const paginaSalva =
-        localStorage.getItem(
-          "lumora-pagina"
-        ) as Page | null;
+  const [page, setPage] = useState<Page>(() => {
+    const paginaSalva =
+      localStorage.getItem(
+        "lumora-pagina"
+      ) as Page | null;
 
-      return paginaSalva || "inicio";
-    });
-
-  /*
-   * Guarda a página em que a profissional estava
-   * antes de abrir o Perfil.
-   *
-   * Assim:
-   *
-   * Serviços → Perfil → Voltar → Serviços
-   * Agenda → Perfil → Voltar → Agenda
-   * Financeiro → Perfil → Voltar → Financeiro
-   * Clientes → Perfil → Voltar → Clientes
-   */
+    return paginaSalva || "inicio";
+  });
 
   const [paginaAnterior, setPaginaAnterior] =
     useState<Page>(() => {
@@ -75,11 +64,9 @@ export default function App() {
     setCarregandoSessao,
   ] = useState(true);
 
-  const [usuarioId, setUsuarioId] =
-    useState("");
+  const [usuarioId, setUsuarioId] = useState("");
 
-  const [nome, setNome] =
-    useState("");
+  const [nome, setNome] = useState("");
 
   const [
     tutorialAberto,
@@ -113,13 +100,6 @@ export default function App() {
      ===================================================== */
 
   function navegar(novaPagina: Page) {
-    /*
-     * Quando abrir o Perfil, guarda a tela atual.
-     *
-     * Não sobrescreve a página anterior se já
-     * estivermos no Perfil.
-     */
-
     if (
       novaPagina === "perfil" &&
       page !== "perfil"
@@ -135,11 +115,6 @@ export default function App() {
      ===================================================== */
 
   function voltarDoPerfil() {
-    /*
-     * Se por algum motivo a página anterior também
-     * for Perfil, usamos Início como segurança.
-     */
-
     const destino =
       paginaAnterior === "perfil"
         ? "inicio"
@@ -149,7 +124,27 @@ export default function App() {
   }
 
   /* =====================================================
-     CARREGAR TEMA
+     INICIAIS DO PROFISSIONAL
+     ===================================================== */
+
+  function obterIniciais(nomeCompleto: string) {
+    const partes = nomeCompleto
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2);
+
+    return (
+      partes
+        .map((parte) =>
+          parte.charAt(0).toUpperCase()
+        )
+        .join("") || "LU"
+    );
+  }
+
+  /* =====================================================
+     CARREGAR TEMA E PROFISSIONAL
      ===================================================== */
 
   async function carregarTema(userId: string) {
@@ -199,8 +194,7 @@ export default function App() {
     setNome(
       nomeCompleto
         .split(/\s+/)
-        .filter(Boolean)[0] ??
-        ""
+        .filter(Boolean)[0] ?? ""
     );
 
     if (
@@ -211,6 +205,10 @@ export default function App() {
       setTutorialAberto(true);
     }
   }
+
+  /* =====================================================
+     FECHAR TUTORIAL
+     ===================================================== */
 
   function fecharTutorial() {
     if (usuarioId) {
@@ -233,8 +231,7 @@ export default function App() {
     async function verificarSessao() {
       const {
         data: { session },
-      } =
-        await supabase.auth.getSession();
+      } = await supabase.auth.getSession();
 
       if (!montado) {
         return;
@@ -247,13 +244,6 @@ export default function App() {
           localStorage.getItem(
             "lumora-pagina"
           ) as Page | null;
-
-        /*
-         * Se existir uma página salva, usamos ela.
-         *
-         * Caso não exista, o dashboard é a tela
-         * inicial da área interna.
-         */
 
         setPage(
           paginaSalva || "inicio"
@@ -307,12 +297,6 @@ export default function App() {
             setPage(
               paginaSalva || "inicio"
             );
-
-            /*
-             * Evita fazer uma operação assíncrona
-             * diretamente dentro do callback do
-             * Supabase.
-             */
 
             setTimeout(() => {
               carregarTema(
@@ -437,8 +421,26 @@ export default function App() {
      ÁREA INTERNA DO LUMORA
      ===================================================== */
 
+  const iniciais = obterIniciais(nome);
+
   return (
     <div className="app">
+
+      {/* =========================================
+          NAVEGAÇÃO DESKTOP
+          ========================================= */}
+
+      <Sidebar
+        page={page}
+        onChange={navegar}
+        nome={nome || "Lumora"}
+        iniciais={iniciais}
+      />
+
+      {/* =========================================
+          CONTEÚDO
+          ========================================= */}
+
       <div className="mobile-shell">
 
         {/* =========================================
@@ -507,7 +509,7 @@ export default function App() {
         )}
 
         {/* =========================================
-            MENU INFERIOR
+            MENU INFERIOR — CELULAR
             ========================================= */}
 
         {page !== "perfil" && (
@@ -516,6 +518,10 @@ export default function App() {
             onChange={navegar}
           />
         )}
+
+        {/* =========================================
+            TUTORIAL
+            ========================================= */}
 
         {tutorialAberto && (
           <Tutorial
@@ -527,6 +533,7 @@ export default function App() {
             onFechar={fecharTutorial}
           />
         )}
+
       </div>
     </div>
   );
